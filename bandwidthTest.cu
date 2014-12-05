@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {
-                    HANDLE_ERROR( cudaMemcpy(outputmanagedMemory,inputmanagedMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault ));
+                    copyKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputcudamallocMemory,inputcudamallocMemory,N);
                  }
                  HANDLE_ERROR( cudaDeviceSynchronize());
                  gettimeofday(&tv2, NULL);

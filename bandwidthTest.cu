@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
                  //float bandwidth =  2.0f * ((float)(1<<10) * memSize * (float)ITERATIONS) / (elapsedTimeSeconds *(1000.0) * (float)(1 << 20));
 
                  printf("Custom kernel(cudaHostAlloc) memcpy Bandwitdh = %f GB/s\n",bandwidth);
-                 printf("Custom kernel(cudaMalloc) memcpy Bandwitdh excluding kernel launch overhead = %f GB/s\n",bandwidth_ex);
+                 printf("Custom kernel(cudaHostAlloc) memcpy Bandwitdh excluding kernel launch overhead = %f GB/s\n",bandwidth_ex);
                  break;
               }
       case 3: {//host allocated memory copy test
@@ -201,11 +201,21 @@ int main(int argc, char *argv[])
                  float bandwidth = 2.0f * ((double)memSize/(1024*1024*1024))*ITERATIONS/elapsedTimeSeconds;
                  //float bandwidth =  2.0f * ((float)(1<<10) * memSize * (float)ITERATIONS) / (elapsedTimeSeconds *(1000.0) * (float)(1 << 20));
 
-                 printf("Custom kernel(cudaHostAlloc) memcpy Bandwitdh = %f GB/s\n",bandwidth);
+                 printf("Device to Device cudaHostAlloc memcpy Bandwitdh = %f GB/s\n",bandwidth);
                  break;
               }
 
       case 4: {//managed memory copy test
+                 gettimeofday(&tv1, NULL);
+                 for(int i = 0; i < ITERATIONS; i++) {
+                    nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputcudamallocMemory,inputcudamallocMemory,N);
+                 }
+                 HANDLE_ERROR( cudaDeviceSynchronize());
+                 gettimeofday(&tv2, NULL);
+                 HANDLE_ERROR( cudaGetLastError());
+                 double nullElapsedTime = diff_s(tv1,tv2);
+
+ 
 
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {
@@ -218,9 +228,11 @@ int main(int argc, char *argv[])
                  printf("elapsedTime per iteration = %f\n",elapsedTimeSeconds/ITERATIONS);
                  //we multiply by two since the DeviceToDevice copy involves both reading and writing to device memory
                  float bandwidth = 2.0f * ((double)memSize/(1024*1024*1024))*ITERATIONS/elapsedTimeSeconds;
+                 float bandwidth_ex = 2.0f * ((double)memSize/(1024*1024*1024))*ITERATIONS/(elapsedTimeSeconds-nullElapsedTime);
                  //float bandwidth =  2.0f * ((float)(1<<10) * memSize * (float)ITERATIONS) / (elapsedTimeSeconds *(1000.0) * (float)(1 << 20));
 
-                 printf("Custom kernel(cudaHostAlloc) memcpy Bandwitdh = %f GB/s\n",bandwidth);
+                 printf("Custom kernel (managed memory)  Bandwitdh = %f GB/s\n",bandwidth);
+                 printf("Custom kernel (managed memory)  Bandwitdh excluding kernel launch overhead = %f GB/s\n",bandwidth_ex);
                  break;
               }
 

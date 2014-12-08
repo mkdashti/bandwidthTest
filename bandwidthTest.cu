@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
       case 2: {//Custom kernel with host allocated memory
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {
-                    nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputcudamallocMemory,inputcudamallocMemory,N);
+                    nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputhostallocMemory,inputhostallocMemory,N);
                  }
                  HANDLE_ERROR( cudaDeviceSynchronize());
                  gettimeofday(&tv2, NULL);
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
       case 4: {//managed memory copy test
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {
-                    nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputcudamallocMemory,inputcudamallocMemory,N);
+                    nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputmanagedMemory,inputmanagedMemory,N);
                  }
                  HANDLE_ERROR( cudaDeviceSynchronize());
                  gettimeofday(&tv2, NULL);
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {
-                    copyKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputcudamallocMemory,inputcudamallocMemory,N);
+                    copyKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputmanagedMemory,inputmanagedMemory,N);
                  }
                  HANDLE_ERROR( cudaDeviceSynchronize());
                  gettimeofday(&tv2, NULL);
@@ -235,7 +235,36 @@ int main(int argc, char *argv[])
                  printf("Custom kernel (managed memory)  Bandwitdh excluding kernel launch overhead = %f GB/s\n",bandwidth_ex);
                  break;
               }
+      case 5: {//Custom kernel with host allocated to malloc copy
+                 gettimeofday(&tv1, NULL);
+                 for(int i = 0; i < ITERATIONS; i++) {
+                    nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputcudamallocMemory,inputhostallocMemory,N);
+                 }
+                 HANDLE_ERROR( cudaDeviceSynchronize());
+                 gettimeofday(&tv2, NULL);
+                 HANDLE_ERROR( cudaGetLastError());
+                 double nullElapsedTime = diff_s(tv1,tv2);
 
+ 
+                 gettimeofday(&tv1, NULL);
+                 for(int i = 0; i < ITERATIONS; i++) {
+                    copyKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputcudamallocMemory,inputhostallocMemory,N);
+                 }
+                 HANDLE_ERROR( cudaDeviceSynchronize());
+                 gettimeofday(&tv2, NULL);
+                 HANDLE_ERROR( cudaGetLastError());
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+                 printf("elapsedTime per iteration = %f\n",elapsedTimeSeconds/ITERATIONS);
+                 //we multiply by two since the DeviceToDevice copy involves both reading and writing to device memory
+                 float bandwidth = 2.0f * ((double)memSize/(1024*1024*1024))*ITERATIONS/elapsedTimeSeconds;
+                 float bandwidth_ex = 2.0f * ((double)memSize/(1024*1024*1024))*ITERATIONS/(elapsedTimeSeconds-nullElapsedTime);
+                 //float bandwidth =  2.0f * ((float)(1<<10) * memSize * (float)ITERATIONS) / (elapsedTimeSeconds *(1000.0) * (float)(1 << 20));
+
+                 printf("Custom kernel(cudaHostAlloc to cudaMalloc) memcpy Bandwitdh = %f GB/s\n",bandwidth);
+                 printf("Custom kernel(cudaHostAlloc to cudaMalloc) memcpy Bandwitdh excluding kernel launch overhead = %f GB/s\n",bandwidth_ex);
+                 break;
+              }
+ 
 
 
 

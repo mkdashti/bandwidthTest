@@ -1,0 +1,118 @@
+#include <unistd.h>
+#include <stdio.h>
+#include <assert.h>
+#include "chTimer.h"
+static void HandleError( cudaError_t err, const char *file, int line ) {
+    
+    if (err != cudaSuccess) {
+        
+        printf( "%s in %s at line %d\n", cudaGetErrorString( err ), file, line );
+        exit( EXIT_FAILURE );
+    
+    }
+
+}
+
+#define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
+
+#define HANDLE_NULL( a ) {if (a == NULL) { \
+                            printf( "Host memory failed in %s at line %d\n", \
+                                    __FILE__, __LINE__ ); \
+                            exit( EXIT_FAILURE );}}
+
+inline double diff_s(struct timeval start, struct timeval end)
+{
+   return ((double) (end.tv_usec - start.tv_usec) / 1000000 + (double) (end.tv_sec - start.tv_sec));
+}
+
+__global__ void kernel(unsigned char *memory)
+{
+   int tid = threadIdx.x + blockIdx.x*blockDim.x;
+   memory[tid]++;
+}
+__global__ void nullKernel(int *memory, int numAccesses)
+{
+
+}
+
+int
+main( int argc, char *argv[] )
+{
+    unsigned char *hostAllocd, *cudaMallocd, *cpuMallocd;
+    int ITERATIONS = 1000;
+    int numBytes = 16;
+    struct timeval  tv1, tv2;
+    int opt;
+    int read=0; //read benchmark? or write?
+    int benchmarkType = 0;
+
+    //chTimerTimestamp start, stop;
+
+      while ((opt = getopt(argc, argv, "m:b:i:r:")) != -1) {
+      switch (opt) {
+         case 'm':
+            numBytes = atoi(optarg);
+            assert(numBytes%16 == 0 && numBytes<=1024);
+            break;
+         case 'b':
+            benchmarkType = atoi(optarg);
+            break;
+         case 'i':
+            ITERATIONS = atoi(optarg);
+            break;
+         case 'r':
+            read = atoi(optarg);
+            break;
+ 
+         default: /* '?' */
+            break;
+      }
+   }
+
+
+   cpuMallocd = (unsigned char *)malloc(sizeof(unsigned char)numBytes);
+   HANDLE_ERROR( cudaHostAlloc( &hostAllocd, sizeof(unsigned char)numBytes, 0 ) );
+   for(int k=0;k< numBytes*numBytes ;k++){
+      cpuMallocd[k]=1;
+      hostInt[k]=1;
+   }
+
+   HANDLE_ERROR( cudaMalloc( &cudaMallocd, sizeof(unsigned char)*numBytes) );
+   HANDLE_ERROR( cudaMemcpy( cudaMallocd,hostAllocd, sizeof(unsigned char)*numBytes,cudaMemcpyDefault) );
+
+   int num_of_blocks = 1;
+   int num_of_threads_per_block = numBytes;
+
+   cudaFree(0);
+   switch (benchmarkType) {
+      case 0: {//Write to hostAlloc'd data
+                 gettimeofday(&tv1, NULL);
+                 for(int i = 0; i < ITERATIONS; i++) {
+                    nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(hostAllocd,numBytes);
+                 }
+                 HANDLE_ERROR( cudaDeviceSynchronize());
+                 gettimeofday(&tv2, NULL);
+                 HANDLE_ERROR( cudaGetLastError());
+                 double nullElapsedTime = diff_s(tv1,tv2);
+
+                 gettimeofday(&tv1, NULL);
+                 for(int i = 0; i < ITERATIONS; i++) {
+                    kernel<<<num_of_blocks,num_of_threads_per_block>>>(hostAllocd,numBytes);
+                 }
+                 HANDLE_ERROR( cudaDeviceSynchronize());
+                 gettimeofday(&tv2, NULL);
+                 HANDLE_ERROR( cudaGetLastError());
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+
+                 printf("Latency including kernel launch overhead = %f us\n",elapsedTimeSeconds*1e6/ITERATIONS);
+                 printf("Latency excluding kernel launch overhead = %f us\n",(elapsedTimeSeconds-nullElapsedTime)*1e6/ITERATIONS);
+                 break;
+              }
+   }
+
+
+   free(cpuMallocd);
+   cudaFree(cudaMallocd);
+   cudaFreeHost(hostAllocd);
+   return 0;
+}

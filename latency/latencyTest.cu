@@ -30,14 +30,16 @@ inline double diff_s(struct timeval start, struct timeval end)
 __global__ void readKernel(unsigned char *memory, unsigned char *memoryToRead)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
-  // for(int i=0; i<N; i++)
-      memory[tid]=memoryToRead[tid];
+   //memory[tid]=memoryToRead[tid];
+   //__shared__ unsigned char temp; 
+   unsigned char temp = memoryToRead[tid];
+   if(!temp)
+      __syncthreads();
 }
 __global__ void writeKernel(unsigned char *memory)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
-  // for(int i=0; i<N; i++)
-      memory[tid]=5;
+   memory[tid]=5;
 }
 __global__ void nullKernel(int *memory)
 {
@@ -90,7 +92,7 @@ main( int argc, char *argv[] )
 {
     unsigned char *hostAllocd, *cudaMallocd, *cpuMallocd;
     int ITERATIONS = 100000;
-    int numBytes = 1;
+    int numBytes = 16384;
     struct timeval  tv1, tv2;
     int opt;
     int read=0; //read benchmark? or write?
@@ -129,8 +131,8 @@ main( int argc, char *argv[] )
    HANDLE_ERROR( cudaMalloc( &cudaMallocd, sizeof(unsigned char)*numBytes) );
    HANDLE_ERROR( cudaMemcpy( cudaMallocd,hostAllocd, sizeof(unsigned char)*numBytes,cudaMemcpyDefault) );
 
-   int num_of_blocks = 1;
-   int num_of_threads_per_block = 1;
+   int num_of_blocks = 16;
+   int num_of_threads_per_block = numBytes/16;
 
    //HANDLE_ERROR(cudaDeviceReset());  //this causes kernel launch failure!! check with cuda-memcheck
    HANDLE_ERROR(cudaFree(0));

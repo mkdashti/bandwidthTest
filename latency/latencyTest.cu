@@ -43,6 +43,14 @@ __global__ void nullKernel(int *memory)
 {
 
 }
+__global__ void initCudaMallocd(unsigned char *memory, int N)
+{
+   int tid =threadIdx.x;
+   if(tid==0){
+      for(int k=0;k< N ;k++)
+         memory[k]=5;
+   }
+}
 
 void verify(unsigned char* memory, int N)
 {
@@ -58,8 +66,26 @@ void verify(unsigned char* memory, int N)
    else
       printf("verified SUCCESS\n");
 }
+__global__ void verifyCudaMallocd(unsigned char* memory, int N)
+{
+   int tid=threadIdx.x;
+   if(tid==0) {
+      int error = 0;
+      for(int i =0; i<N; i++){
+         if(memory[i]!=5){
+            error = 1;
+            break;
+         }
+      }
+      if(error)
+         printf("error in verification\n");
+      else
+         printf("verified SUCCESS\n");
+   }
+}
 
-int
+
+   int
 main( int argc, char *argv[] )
 {
     unsigned char *hostAllocd, *cudaMallocd, *cpuMallocd;
@@ -141,10 +167,60 @@ main( int argc, char *argv[] )
                  printf("[%s] Latency including kernel launch overhead = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
                  break;
               }
+   
+      case 1: {//read/Write to cudaMalloc'd data
+                 if(read)
+                 {
+
+                    unsigned char *memoryToRead;
+                    HANDLE_ERROR( cudaMalloc( &memoryToRead, sizeof(unsigned char)*numBytes ) );
+                    initCudaMallocd<<<1,1>>>(memoryToRead,numBytes);
+                    HANDLE_ERROR( cudaDeviceSynchronize());
+                    gettimeofday(&tv1, NULL);
+                    for(int i = 0; i < ITERATIONS; i++) {
+                       readKernel<<<num_of_blocks,num_of_threads_per_block>>>(cudaMallocd,memoryToRead);
+                       HANDLE_ERROR( cudaDeviceSynchronize());
+                    }
+                    gettimeofday(&tv2, NULL);
+                    cudaFree(memoryToRead);
+                    verifyCudaMallocd<<<1,1>>>(cudaMallocd,numBytes);
+                    HANDLE_ERROR( cudaDeviceSynchronize());
+                 }
+                 else
+                 {
+                    gettimeofday(&tv1, NULL);
+                    for(int i = 0; i < ITERATIONS; i++) {
+                       writeKernel<<<num_of_blocks,num_of_threads_per_block>>>(cudaMallocd);
+                       HANDLE_ERROR( cudaDeviceSynchronize());
+                    }
+                    gettimeofday(&tv2, NULL);
+                    verifyCudaMallocd<<<1,1>>>(cudaMallocd,numBytes);
+                    HANDLE_ERROR( cudaDeviceSynchronize());
+                 }
+                 HANDLE_ERROR( cudaGetLastError());
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+                 printf("[%s] Latency including kernel launch overhead = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 break;
+              }
+
+      case 2:
+              {
+                 gettimeofday(&tv1, NULL);
+                 for(int i = 0; i < ITERATIONS; i++) {
+                    nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(0);
+                    HANDLE_ERROR( cudaDeviceSynchronize());
+                 }
+                 gettimeofday(&tv2, NULL);
+                 HANDLE_ERROR( cudaGetLastError());
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+                 printf("null kernel launch overhead = %f us\n",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+              
+              } 
    }
 
    free(cpuMallocd);
    cudaFree(cudaMallocd);
    cudaFreeHost(hostAllocd);
+   cudaDeviceReset();
    return 0;
 }

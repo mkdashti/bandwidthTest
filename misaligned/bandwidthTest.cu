@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 
    int num_of_blocks = 1024;
 	int num_of_threads_per_block = 1024;
-   int memSize = 4*1024*1024;
+   int memSize = 2*1024*1024;
    int benchmarkType = 0;
    int ITERATIONS = 10;
    int t = 512;
@@ -98,14 +98,14 @@ int main(int argc, char *argv[])
    cudaFree(0); //set context so that overhead won't be later accounted
 
    float *cpuMemory,*inputcudamallocMemory,*outputcudamallocMemory;
-   cpuMemory = (float *)malloc(memSize*sizeof(float)*32);
+   cpuMemory = (float *)malloc(memSize*sizeof(float)*64);
    assert(cpuMemory);
-   for(int i = 0; i < memSize*32/sizeof(float); i++)
+   for(int i = 0; i < memSize*64/sizeof(float); i++)
       cpuMemory[i] = (float)(i & 0xff);
 
-   HANDLE_ERROR( cudaMalloc( (void**)& inputcudamallocMemory, sizeof(float)*memSize*32) );
-   HANDLE_ERROR( cudaMalloc( (void**)& outputcudamallocMemory, sizeof(float)*memSize*32) );
-   HANDLE_ERROR( cudaMemcpy(inputcudamallocMemory,cpuMemory, sizeof(float)*memSize*32,cudaMemcpyDefault) );
+   HANDLE_ERROR( cudaMalloc( (void**)& inputcudamallocMemory, sizeof(float)*memSize*64) );
+   HANDLE_ERROR( cudaMalloc( (void**)& outputcudamallocMemory, sizeof(float)*memSize*64) );
+   HANDLE_ERROR( cudaMemcpy(inputcudamallocMemory,cpuMemory, sizeof(float)*memSize*64,cudaMemcpyDefault) );
 
   
    switch (benchmarkType) {
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
                  double nullElapsedTime = diff_s(tv1,tv2);
 
 
-                 for (int offset=0;offset<=32;offset++)
+                 for (int offset=0;offset<=64;offset++)
                  {
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {

@@ -92,7 +92,7 @@ main( int argc, char *argv[] )
 {
     unsigned char *hostAllocd, *cudaMallocd, *cpuMallocd;
     int ITERATIONS = 100000;
-    int numBytes = 16384;
+    int numBytes = 1;
     struct timeval  tv1, tv2;
     int opt;
     int read=0; //read benchmark? or write?
@@ -131,8 +131,12 @@ main( int argc, char *argv[] )
    HANDLE_ERROR( cudaMalloc( &cudaMallocd, sizeof(unsigned char)*numBytes) );
    HANDLE_ERROR( cudaMemcpy( cudaMallocd,hostAllocd, sizeof(unsigned char)*numBytes,cudaMemcpyDefault) );
 
-   int num_of_blocks = 16;
-   int num_of_threads_per_block = numBytes/16;
+   int num_of_blocks=1;
+   int num_of_threads_per_block=numBytes;
+   if(numBytes>=1024){
+      num_of_blocks = 16;
+      num_of_threads_per_block = numBytes/16;
+   }
 
    //HANDLE_ERROR(cudaDeviceReset());  //this causes kernel launch failure!! check with cuda-memcheck
    HANDLE_ERROR(cudaFree(0));
@@ -152,7 +156,7 @@ main( int argc, char *argv[] )
                     }
                     gettimeofday(&tv2, NULL);
                     cudaFreeHost(memoryToRead);
-                    verify(hostAllocd,numBytes);
+                    //verify(hostAllocd,numBytes);
                  }
                  else
                  {
@@ -185,8 +189,8 @@ main( int argc, char *argv[] )
                     }
                     gettimeofday(&tv2, NULL);
                     cudaFree(memoryToRead);
-                    verifyCudaMallocd<<<1,1>>>(cudaMallocd,numBytes);
-                    HANDLE_ERROR( cudaDeviceSynchronize());
+                    //verifyCudaMallocd<<<1,1>>>(cudaMallocd,numBytes);
+                    //HANDLE_ERROR( cudaDeviceSynchronize());
                  }
                  else
                  {
@@ -217,7 +221,44 @@ main( int argc, char *argv[] )
                  double elapsedTimeSeconds = diff_s(tv1,tv2);
                  printf("null kernel launch overhead = %f us\n",elapsedTimeSeconds*1e6/(float)ITERATIONS);
               
-              } 
+              }
+      case 3: {//read/Write to hostAlloc'd data
+                 if(read)
+                 {
+
+                    int temp;
+                    unsigned char *memoryToRead = (unsigned char *)malloc(sizeof(unsigned char)*numBytes );
+                    assert(memoryToRead);
+                    for(int k=0;k< numBytes ;k++)
+                       memoryToRead[k]=5;
+                    gettimeofday(&tv1, NULL);
+                    for(int i = 0; i < ITERATIONS; i++) {
+                       for(int j=0; j<numBytes; j++){
+                          temp=memoryToRead[j];
+                          if(!temp)
+                             cpuMallocd[j]=temp;
+                       }
+                    }
+                    gettimeofday(&tv2, NULL);
+                    free(memoryToRead);
+                    //verify(cpuMallocd,numBytes);
+                 }
+                 else
+                 {
+                    gettimeofday(&tv1, NULL);
+                    for(int i = 0; i < ITERATIONS; i++) {
+                       for(int k=0;k< numBytes ;k++)
+                          cpuMallocd[k]=5;
+                    }
+                    gettimeofday(&tv2, NULL);
+                    verify(cpuMallocd,numBytes);
+                 }
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+                 printf("[%s] Latency including kernel launch overhead = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 break;
+              }
+   
+
    }
 
    free(cpuMallocd);

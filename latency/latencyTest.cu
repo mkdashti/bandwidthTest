@@ -102,7 +102,7 @@ main( int argc, char *argv[] )
       switch (opt) {
          case 'm':
             numBytes = atoi(optarg);
-            assert(numBytes%16 == 0 && numBytes<=1024);
+            //assert(numBytes%16 == 0 && numBytes<=1024);
             break;
          case 'b':
             benchmarkType = atoi(optarg);
@@ -133,7 +133,7 @@ main( int argc, char *argv[] )
 
    int num_of_blocks=1;
    int num_of_threads_per_block=numBytes;
-   if(numBytes>=1024){
+   if(numBytes>1024){
       num_of_blocks = 16;
       num_of_threads_per_block = numBytes/16;
    }
@@ -222,7 +222,7 @@ main( int argc, char *argv[] )
                  printf("null kernel launch overhead = %f us\n",elapsedTimeSeconds*1e6/(float)ITERATIONS);
               
               }
-      case 3: {//read/Write to hostAlloc'd data
+      case 3: {//read/Write to cpu mallocd data
                  if(read)
                  {
 

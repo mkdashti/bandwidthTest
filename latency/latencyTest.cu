@@ -255,10 +255,50 @@ main( int argc, char *argv[] )
                     verify(cpuMallocd,numBytes);
                  }
                  double elapsedTimeSeconds = diff_s(tv1,tv2);
-                 printf("cpu malloc [%s] Latency including kernel launch overhead = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 printf("cpu malloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 break;
+              }
+       case 4: {//read/Write to cpu but hostAllocd data
+                  unsigned char *memoryToRead,*memoryToWrite;
+                  HANDLE_ERROR(cudaHostAlloc(&memoryToRead,sizeof(unsigned char)*numBytes,0 ));
+                  HANDLE_ERROR(cudaHostAlloc(&memoryToWrite,sizeof(unsigned char)*numBytes,0 ));
+
+                 if(read)
+                 {
+
+                    int temp;
+                    for(int k=0;k< numBytes ;k++)
+                       memoryToRead[k]=5;
+                    gettimeofday(&tv1, NULL);
+                    for(int i = 0; i < ITERATIONS; i++) {
+                       for(int j=0; j<numBytes; j++){
+                          temp=memoryToRead[j];
+                          if(!temp)
+                             memoryToWrite[j]=temp;
+                       }
+                    }
+                    gettimeofday(&tv2, NULL);
+                    //verify(cpuMallocd,numBytes);
+                 }
+                 else
+                 {
+                    gettimeofday(&tv1, NULL);
+                    for(int i = 0; i < ITERATIONS; i++) {
+                       for(int k=0;k< numBytes ;k++)
+                          memoryToWrite[k]=5;
+                    }
+                    gettimeofday(&tv2, NULL);
+                    verify(memoryToWrite,numBytes);
+                 }
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+                 printf("cpu to hostAlloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 cudaFreeHost(memoryToRead);
+                 cudaFreeHost(memoryToWrite);
                  break;
               }
    
+
+ 
 
    }
 

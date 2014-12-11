@@ -87,7 +87,11 @@ __global__ void verifyCudaMallocd(int* memory, int N)
    }
 }
 
-
+__global__ void pollute_L2_cache(int *junk)
+{
+   int tid=threadIdx.x+blockDim.x*blockIdx.x;
+   junk[tid]= 5 & 0xDEADBEEF;
+}
    int
 main( int argc, char *argv[] )
 {
@@ -98,8 +102,9 @@ main( int argc, char *argv[] )
     int opt;
     int read=0; //read benchmark? or write?
     int benchmarkType = 0;
+    int pollute = 0;
 
-      while ((opt = getopt(argc, argv, "m:b:i:r:")) != -1) {
+      while ((opt = getopt(argc, argv, "m:b:i:r:p")) != -1) {
       switch (opt) {
          case 'm':
             numBytes = atoi(optarg);
@@ -114,6 +119,9 @@ main( int argc, char *argv[] )
          case 'r':
             read = atoi(optarg);
             break;
+         case 'p':
+            pollute = 1;
+            break;
  
          default: /* '?' */
             break;
@@ -124,6 +132,8 @@ main( int argc, char *argv[] )
    cpuMallocd = (int *)malloc(sizeof(int)*numBytes*numBytes/(16*16));
    assert(cpuMallocd);
    HANDLE_ERROR( cudaHostAlloc( &hostAllocd, sizeof(int)*numBytes*numBytes/(16*16), 0 ) );
+   int *junk;
+   HANDLE_ERROR( cudaHostAlloc( &junk, sizeof(int)*512*64, 0 ) );
    for(int k=0;k< numBytes ;k++){
       cpuMallocd[k]=1;
       hostAllocd[k]=1;
@@ -165,6 +175,10 @@ main( int argc, char *argv[] )
                        memoryToRead[k]=5;
                     gettimeofday(&tv1, NULL);
                     for(int i = 0; i < ITERATIONS; i++) {
+                       if(pollute) {
+                          pollute_L2_cache<<<512,64>>>(junk);
+                          HANDLE_ERROR( cudaDeviceSynchronize());
+                       }
                        readKernel<<<num_of_blocks,num_of_threads_per_block>>>(hostAllocd,memoryToRead);
                        HANDLE_ERROR( cudaDeviceSynchronize());
                     }
@@ -176,6 +190,11 @@ main( int argc, char *argv[] )
                  {
                     gettimeofday(&tv1, NULL);
                     for(int i = 0; i < ITERATIONS; i++) {
+                       if(pollute) {
+                          pollute_L2_cache<<<512,64>>>(junk);
+                          HANDLE_ERROR( cudaDeviceSynchronize());
+                       }
+
                        writeKernel<<<num_of_blocks,num_of_threads_per_block>>>(hostAllocd);
                        HANDLE_ERROR( cudaDeviceSynchronize());
                     }
@@ -198,6 +217,11 @@ main( int argc, char *argv[] )
                     HANDLE_ERROR( cudaDeviceSynchronize());
                     gettimeofday(&tv1, NULL);
                     for(int i = 0; i < ITERATIONS; i++) {
+                       if(pollute) {
+                          pollute_L2_cache<<<512,64>>>(junk);
+                          HANDLE_ERROR( cudaDeviceSynchronize());
+                       }
+
                        readKernel<<<num_of_blocks,num_of_threads_per_block>>>(cudaMallocd,memoryToRead);
                        HANDLE_ERROR( cudaDeviceSynchronize());
                     }
@@ -210,6 +234,11 @@ main( int argc, char *argv[] )
                  {
                     gettimeofday(&tv1, NULL);
                     for(int i = 0; i < ITERATIONS; i++) {
+                       if(pollute) {
+                          pollute_L2_cache<<<512,64>>>(junk);
+                          HANDLE_ERROR( cudaDeviceSynchronize());
+                       }
+
                        writeKernel<<<num_of_blocks,num_of_threads_per_block>>>(cudaMallocd);
                        HANDLE_ERROR( cudaDeviceSynchronize());
                     }
@@ -278,6 +307,7 @@ main( int argc, char *argv[] )
    free(cpuMallocd);
    cudaFree(cudaMallocd);
    cudaFreeHost(hostAllocd);
+   cudaFreeHost(junk);
    cudaDeviceReset();
    return 0;
 }

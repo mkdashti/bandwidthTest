@@ -200,8 +200,8 @@ main( int argc, char *argv[] )
                        HANDLE_ERROR( cudaDeviceSynchronize());
                     }
                     gettimeofday(&tv2, NULL);
-                    verifyCudaMallocd<<<1,1>>>(cudaMallocd,numBytes);
-                    HANDLE_ERROR( cudaDeviceSynchronize());
+                    //verifyCudaMallocd<<<1,1>>>(cudaMallocd,numBytes);
+                    //HANDLE_ERROR( cudaDeviceSynchronize());
                  }
                  HANDLE_ERROR( cudaGetLastError());
                  double elapsedTimeSeconds = diff_s(tv1,tv2);

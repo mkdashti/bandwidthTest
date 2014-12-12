@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
    int num_of_blocks = 1024;
 	int num_of_threads_per_block = 1024;
-   int memSize = 64*1024*1024;
+   int memSize = 4*1024*1024;
    int benchmarkType = 0;
    int ITERATIONS = 10;
    int t = 512;
@@ -103,12 +103,9 @@ int main(int argc, char *argv[])
    HANDLE_ERROR( cudaHostAlloc( (void**)& inputhostallocMemory, sizeof(unsigned char)*memSize, cudaHostAllocDefault) );
    HANDLE_ERROR( cudaHostAlloc( (void**)& outputhostallocMemory, sizeof(unsigned char)*memSize, cudaHostAllocDefault) );
    HANDLE_ERROR( cudaMalloc( (void**)& inputcudamallocMemory, sizeof(unsigned char)*memSize) );
-   HANDLE_ERROR( cudaMallocManaged( (void**)& inputmanagedMemory, sizeof(unsigned char)*memSize) );
-   HANDLE_ERROR( cudaMallocManaged( (void**)& outputmanagedMemory, sizeof(unsigned char)*memSize) );
    HANDLE_ERROR( cudaMalloc( (void**)& outputcudamallocMemory, sizeof(unsigned char)*memSize) );
    HANDLE_ERROR( cudaMemcpy(inputcudamallocMemory,cpuMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault) );
    HANDLE_ERROR( cudaMemcpy(inputhostallocMemory,cpuMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault) );
-   HANDLE_ERROR( cudaMemcpy(inputmanagedMemory,cpuMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault) );
 
   
    switch (benchmarkType) {
@@ -191,6 +188,7 @@ int main(int argc, char *argv[])
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {
                     HANDLE_ERROR( cudaMemcpyAsync(outputhostallocMemory,inputhostallocMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault) );
+                    HANDLE_ERROR( cudaMemcpy(outputhostallocMemory,inputhostallocMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault) );
                  }
                  HANDLE_ERROR( cudaDeviceSynchronize());
                  gettimeofday(&tv2, NULL);
@@ -206,6 +204,9 @@ int main(int argc, char *argv[])
               }
 
       case 4: {//managed memory copy test
+                 HANDLE_ERROR( cudaMallocManaged( (void**)& inputmanagedMemory, sizeof(unsigned char)*memSize) );
+                 HANDLE_ERROR( cudaMallocManaged( (void**)& outputmanagedMemory, sizeof(unsigned char)*memSize) );
+                 HANDLE_ERROR( cudaMemcpy(inputmanagedMemory,cpuMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault) );
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {
                     nullKernel<<<num_of_blocks,num_of_threads_per_block>>>(outputmanagedMemory,inputmanagedMemory,N);
@@ -233,6 +234,9 @@ int main(int argc, char *argv[])
 
                  printf("Custom kernel (managed memory)  Bandwitdh = %f GB/s\n",bandwidth);
                  printf("Custom kernel (managed memory)  Bandwitdh excluding kernel launch overhead = %f GB/s\n",bandwidth_ex);
+                 cudaFree(inputmanagedMemory);
+                 cudaFree(outputmanagedMemory);
+
                  break;
               }
       case 5: {//Custom kernel with host allocated to malloc copy
@@ -274,8 +278,5 @@ int main(int argc, char *argv[])
    cudaFreeHost(outputhostallocMemory);
    cudaFree(inputcudamallocMemory);
    cudaFree(outputcudamallocMemory);
-   cudaFree(inputmanagedMemory);
-   cudaFree(outputmanagedMemory);
-
    return 0; 
 }

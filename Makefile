@@ -11,6 +11,6 @@ SRC = bandwidthTest.cu
 EXE = bandwidthTest
 
 release: $(SRC)
-	$(CC) -o $(EXE) $(SRC)
+	$(CC) -o $(EXE) $(SRC) -lpthread
 clean: $(SRC)
 	rm -f $(EXE) *.o

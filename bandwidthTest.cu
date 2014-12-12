@@ -3,6 +3,9 @@
 #include <assert.h>
 #include <sched.h>
 #include <sys/sysinfo.h>
+#include <pthread.h>
+#include <sched.h>
+#include <sys/syscall.h> 
 
 #include <sys/time.h>
 #include <time.h>
@@ -51,6 +54,78 @@ __global__ void nullKernel(unsigned char *output, unsigned char *input, int N) {
 
 } 
 
+
+static pid_t gettid(void) {                                                                      
+   return syscall(__NR_gettid);
+}
+
+void set_affinity(int tid, int core_id) {
+   cpu_set_t mask;
+   CPU_ZERO(&mask);
+   CPU_SET(core_id, &mask);
+
+   int r = sched_setaffinity(tid, sizeof(mask), &mask);                                                                  
+   if (r < 0) {
+      fprintf(stderr, "couldn't set affinity for %d\n", core_id);
+      exit(1);
+   }
+}
+
+
+typedef struct {                                                                                                        
+   int id;
+   unsigned char *input;
+   unsigned char *output;
+   int memSize;
+} parm;
+
+void *work( void *arg ) {
+   parm *p=(parm *)arg;
+   int tid = gettid();                                                                                                   
+   set_affinity(tid, (p->id)%get_nprocs());
+
+   memcpy(p->output,p->input,p->memSize);
+   return 0;
+}
+void launch_cpu_threads(int nthreads, unsigned char **out, unsigned char **in, int memSize)
+{
+   pthread_t *threads;
+   pthread_attr_t attr;
+   parm *p;
+   int j;
+   
+   threads=(pthread_t *)malloc(nthreads * sizeof(pthread_t));
+   if(threads == NULL) {
+      printf("ERROR malloc failed to create CPU threads\n");
+      exit(1);
+   }
+   pthread_attr_init(&attr);
+   p=(parm *)malloc(nthreads * sizeof(parm));
+
+   for (j=0; j<nthreads; j++)
+   {
+      p[j].id=j;
+      p[j].input=in[j];
+      p[j].output=out[j];
+      p[j].memSize=memSize;
+      if(pthread_create(&threads[j], &attr, work, (void *)(p+j))!=0)
+      {
+         printf("ERROR creating threads\n");
+         exit(1);
+      }
+   }
+
+   for (j=0; j<nthreads; j++)
+   {
+      if(pthread_join(threads[j],NULL)!=0) {
+         printf("ERROR in joing threads\n");
+         exit(1);
+      }
+   }
+
+   pthread_attr_destroy(&attr);
+   free(p);
+}
 
 
 int main(int argc, char *argv[]) 
@@ -267,7 +342,72 @@ int main(int argc, char *argv[])
                  printf("Custom kernel(cudaHostAlloc to cudaMalloc) memcpy Bandwitdh excluding kernel launch overhead = %f GB/s\n",bandwidth_ex);
                  break;
               }
+      case 6: {//Cpu malloc to malloc
  
+                 unsigned char *mallocdOut,*mallocdIn;
+                 mallocdOut = (unsigned char *)malloc(sizeof(unsigned char)*memSize);
+                 mallocdIn = (unsigned char *)malloc(sizeof(unsigned char)*memSize);
+                 for(int i=0; i<memSize/sizeof(unsigned char); i++)
+                    mallocdIn[i]=5;
+                 if(!mallocdOut || !mallocdIn) {
+                    printf("ERROR in malloc\n");
+                    return -1;
+                 }
+                 for(int i=0; i<memSize/sizeof(unsigned char); i++)
+                    mallocdIn[i]=5;
+                
+                 gettimeofday(&tv1, NULL);
+                 for(int i = 0; i < ITERATIONS; i++) {
+                    memcpy(mallocdOut,mallocdIn,sizeof(unsigned char)*memSize);
+                 }
+                 gettimeofday(&tv2, NULL);
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+                 printf("elapsedTime per iteration = %f\n",elapsedTimeSeconds/ITERATIONS);
+                 //we multiply by two since the DeviceToDevice copy involves both reading and writing to device memory
+                 float bandwidth =  ((double)memSize/(1024*1024*1024))*ITERATIONS/elapsedTimeSeconds;
+
+                 printf("cpu malloc to malloc memcpy Bandwitdh = %f GB/s\n",bandwidth);
+                 free(mallocdOut);
+                 free(mallocdIn);
+                 break;
+              }
+       case 7: {//Cpu multithreaded malloc to malloc
+
+                 const int nthreads=4; 
+                 unsigned char *mallocdOut[nthreads],*mallocdIn[nthreads];
+                 for(int i=0; i<nthreads; i++) {
+                    mallocdOut[i] = (unsigned char *)malloc(sizeof(unsigned char)*memSize);
+                    mallocdIn[i] = (unsigned char *)malloc(sizeof(unsigned char)*memSize);
+                 }
+                  if(!mallocdOut || !mallocdIn) {
+                    printf("ERROR in malloc\n");
+                    return -1;
+                 }
+                for(int i=0; i<memSize/sizeof(unsigned char); i++){
+                    mallocdIn[0][i]=5;
+                    mallocdIn[1][i]=5;
+                    mallocdIn[2][i]=5;
+                    mallocdIn[3][i]=5;
+                }
+                 gettimeofday(&tv1, NULL);
+                 for(int i = 0; i < ITERATIONS; i++) {
+                    launch_cpu_threads(nthreads,mallocdOut,mallocdIn,memSize);
+                 }
+                 gettimeofday(&tv2, NULL);
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+                 printf("elapsedTime per iteration = %f\n",elapsedTimeSeconds/ITERATIONS);
+                 //we multiply by two since the DeviceToDevice copy involves both reading and writing to device memory
+                 float bandwidth = 4 * ((double)memSize/(1024*1024*1024))*ITERATIONS/elapsedTimeSeconds;
+                 printf("cpu malloc to malloc memcpy Bandwitdh = %f GB/s\n",bandwidth);
+                 for(int i=0; i<nthreads; i++){
+                    free(mallocdOut[i]);
+                    free(mallocdIn[i]);
+                 }
+                 break;
+              }
+ 
+
+
 
 
 

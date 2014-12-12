@@ -188,7 +188,6 @@ int main(int argc, char *argv[])
                  gettimeofday(&tv1, NULL);
                  for(int i = 0; i < ITERATIONS; i++) {
                     HANDLE_ERROR( cudaMemcpyAsync(outputhostallocMemory,inputhostallocMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault) );
-                    HANDLE_ERROR( cudaMemcpy(outputhostallocMemory,inputhostallocMemory, sizeof(unsigned char)*memSize,cudaMemcpyDefault) );
                  }
                  HANDLE_ERROR( cudaDeviceSynchronize());
                  gettimeofday(&tv2, NULL);

@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 static void HandleError( cudaError_t err, const char *file, int line ) {
     
     if (err != cudaSuccess) {
@@ -98,8 +99,9 @@ main( int argc, char *argv[] )
     int opt;
     int read=0; //read benchmark? or write?
     int benchmarkType = 0;
+    int locked = 0; //mlock data?
 
-      while ((opt = getopt(argc, argv, "m:b:i:r:")) != -1) {
+      while ((opt = getopt(argc, argv, "m:b:i:r:l")) != -1) {
       switch (opt) {
          case 'm':
             numBytes = atoi(optarg);
@@ -114,7 +116,11 @@ main( int argc, char *argv[] )
          case 'r':
             read = atoi(optarg);
             break;
+         case 'l':
+            locked = 1;
+            break;
  
+
          default: /* '?' */
             break;
       }
@@ -226,6 +232,8 @@ main( int argc, char *argv[] )
               }
       case 3: {//read/Write to cpu mallocd data
                  uint64_t *memory_to_access = (uint64_t *)malloc(sizeof(uint64_t)*numBytes );
+                 if(locked)
+                    mlock(memory_to_access,sizeof(uint64_t)*numBytes);
                  assert(memory_to_access);
                  if(read)
                  {

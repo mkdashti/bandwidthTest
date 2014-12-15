@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <time.h>
-
+#include <stdlib.h>
 static void HandleError( cudaError_t err, const char *file, int line ) {
     
     if (err != cudaSuccess) {
@@ -28,16 +28,16 @@ inline double diff_s(struct timeval start, struct timeval end)
    return ((double) (end.tv_usec - start.tv_usec) / 1000000 + (double) (end.tv_sec - start.tv_sec));
 }
 
-__global__ void readKernel(unsigned char *memory, unsigned char *memoryToRead)
+__global__ void readKernel(uint64_t *memory, uint64_t *memoryToRead)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
    //memory[tid]=memoryToRead[tid];
-   //__shared__ unsigned char temp; 
-   unsigned char temp = memoryToRead[tid];
+   //__shared__ uint64_t temp; 
+   uint64_t temp = memoryToRead[tid];
    if(!temp)
       __syncthreads();
 }
-__global__ void writeKernel(unsigned char *memory)
+__global__ void writeKernel(uint64_t *memory)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
    memory[tid]=5;
@@ -46,7 +46,7 @@ __global__ void nullKernel(int *memory)
 {
 
 }
-__global__ void initCudaMallocd(unsigned char *memory, int N)
+__global__ void initCudaMallocd(uint64_t *memory, int N)
 {
    int tid =threadIdx.x;
    if(tid==0){
@@ -55,7 +55,7 @@ __global__ void initCudaMallocd(unsigned char *memory, int N)
    }
 }
 
-void verify(unsigned char* memory, int N)
+void verify(uint64_t* memory, int N)
 {
    int error = 0;
    for(int i =0; i<N; i++){
@@ -69,7 +69,7 @@ void verify(unsigned char* memory, int N)
    else
       printf("verified SUCCESS\n");
 }
-__global__ void verifyCudaMallocd(unsigned char* memory, int N)
+__global__ void verifyCudaMallocd(uint64_t* memory, int N)
 {
    int tid=threadIdx.x;
    if(tid==0) {
@@ -91,7 +91,7 @@ __global__ void verifyCudaMallocd(unsigned char* memory, int N)
    int
 main( int argc, char *argv[] )
 {
-    unsigned char *hostAllocd, *cudaMallocd, *cpuMallocd;
+    uint64_t *hostAllocd, *cudaMallocd, *cpuMallocd;
     int ITERATIONS = 100000;
     int numBytes = 1;
     struct timeval  tv1, tv2;
@@ -121,16 +121,16 @@ main( int argc, char *argv[] )
    }
 
 
-   cpuMallocd = (unsigned char *)malloc(sizeof(unsigned char)*numBytes);
+   cpuMallocd = (uint64_t *)malloc(sizeof(uint64_t)*numBytes);
    assert(cpuMallocd);
-   HANDLE_ERROR( cudaHostAlloc( &hostAllocd, sizeof(unsigned char)*numBytes, 0 ) );
+   HANDLE_ERROR( cudaHostAlloc( &hostAllocd, sizeof(uint64_t)*numBytes, 0 ) );
    for(int k=0;k< numBytes ;k++){
       cpuMallocd[k]=1;
       hostAllocd[k]=1;
    }
 
-   HANDLE_ERROR( cudaMalloc( &cudaMallocd, sizeof(unsigned char)*numBytes) );
-   HANDLE_ERROR( cudaMemcpy( cudaMallocd,hostAllocd, sizeof(unsigned char)*numBytes,cudaMemcpyDefault) );
+   HANDLE_ERROR( cudaMalloc( &cudaMallocd, sizeof(uint64_t)*numBytes) );
+   HANDLE_ERROR( cudaMemcpy( cudaMallocd,hostAllocd, sizeof(uint64_t)*numBytes,cudaMemcpyDefault) );
 
    int num_of_blocks=1;
    int num_of_threads_per_block=numBytes;
@@ -146,8 +146,8 @@ main( int argc, char *argv[] )
                  if(read)
                  {
 
-                    unsigned char *memoryToRead;
-                    HANDLE_ERROR( cudaHostAlloc( &memoryToRead, sizeof(unsigned char)*numBytes, 0 ) );
+                    uint64_t *memoryToRead;
+                    HANDLE_ERROR( cudaHostAlloc( &memoryToRead, sizeof(uint64_t)*numBytes, 0 ) );
                     for(int k=0;k< numBytes ;k++)
                        memoryToRead[k]=5;
                     gettimeofday(&tv1, NULL);
@@ -179,8 +179,8 @@ main( int argc, char *argv[] )
                  if(read)
                  {
 
-                    unsigned char *memoryToRead;
-                    HANDLE_ERROR( cudaMalloc( &memoryToRead, sizeof(unsigned char)*numBytes ) );
+                    uint64_t *memoryToRead;
+                    HANDLE_ERROR( cudaMalloc( &memoryToRead, sizeof(uint64_t)*numBytes ) );
                     initCudaMallocd<<<1,1>>>(memoryToRead,numBytes);
                     HANDLE_ERROR( cudaDeviceSynchronize());
                     gettimeofday(&tv1, NULL);
@@ -229,13 +229,13 @@ main( int argc, char *argv[] )
                  assert(memory_to_access);
                  if(read)
                  {
-                    for(int k=0;k< numBytes/sizeof(uint64_t) ;k++)
+                    for(int k=0;k< numBytes ;k++)
                        memory_to_access[k]=5;
 
                     uint64_t fake;
                     gettimeofday(&tv1, NULL);
                     for(int i=0; i<ITERATIONS; i++) {
-                       for (int j = 0; j < (numBytes / sizeof(uint64_t)); j += 8) {
+                       for (int j = 0; j < (numBytes); j += 8) {
                           fake += memory_to_access[j];
                           fake += memory_to_access[j + 1];
                           fake += memory_to_access[j + 2];
@@ -247,15 +247,13 @@ main( int argc, char *argv[] )
                        }
                     }
                     gettimeofday(&tv2, NULL);
-                    free(memory_to_access);
-         
                  }
                  else
                  {
                     uint64_t fake=5;
                     gettimeofday(&tv1, NULL);
                     for(int i=0; i<ITERATIONS; i++) {
-                       for (int j = 0; j < (numBytes / sizeof(uint64_t)); j += 8) {
+                       for (int j = 0; j < (numBytes); j += 8) {
                           memory_to_access[j] = fake;
                           memory_to_access[j + 1] = fake;
                           memory_to_access[j + 2] = fake;
@@ -267,56 +265,60 @@ main( int argc, char *argv[] )
                        }
                     }
                     gettimeofday(&tv2, NULL);
-                    free(memory_to_access);
-         
-
                  }
                  double elapsedTimeSeconds = diff_s(tv1,tv2);
                  printf("cpu malloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 free(memory_to_access);
                  break;
               }
-       case 4: {//read/Write to cpu but hostAllocd data
-                  unsigned char *memoryToRead,*memoryToWrite;
-                  HANDLE_ERROR(cudaHostAlloc(&memoryToRead,sizeof(unsigned char)*numBytes,0 ));
-                  HANDLE_ERROR(cudaHostAlloc(&memoryToWrite,sizeof(unsigned char)*numBytes,0 ));
-
+      case 4: {//read/Write to cpu but hostsllocd data
+                 uint64_t *memory_to_access;
+                 HANDLE_ERROR(cudaHostAlloc(&memory_to_access,sizeof(uint64_t)*numBytes,0));
                  if(read)
                  {
-
-                    int temp;
                     for(int k=0;k< numBytes ;k++)
-                       memoryToRead[k]=5;
+                       memory_to_access[k]=5;
+
+                    uint64_t fake;
                     gettimeofday(&tv1, NULL);
-                    for(int i = 0; i < ITERATIONS; i++) {
-                       for(int j=0; j<numBytes; j++){
-                          temp=memoryToRead[j];
-                          if(!temp)
-                             memoryToWrite[j]=temp;
+                    for(int i=0; i<ITERATIONS; i++) {
+                       for (int j = 0; j < (numBytes); j += 8) {
+                          fake += memory_to_access[j];
+                          fake += memory_to_access[j + 1];
+                          fake += memory_to_access[j + 2];
+                          fake += memory_to_access[j + 3];
+                          fake += memory_to_access[j + 4];
+                          fake += memory_to_access[j + 5];
+                          fake += memory_to_access[j + 6];
+                          fake += memory_to_access[j + 7];
                        }
                     }
                     gettimeofday(&tv2, NULL);
-                    //verify(cpuMallocd,numBytes);
                  }
                  else
                  {
+                    uint64_t fake=5;
                     gettimeofday(&tv1, NULL);
-                    for(int i = 0; i < ITERATIONS; i++) {
-                       for(int k=0;k< numBytes ;k++)
-                          memoryToWrite[k]=5;
+                    for(int i=0; i<ITERATIONS; i++) {
+                       for (int j = 0; j < (numBytes); j += 8) {
+                          memory_to_access[j] = fake;
+                          memory_to_access[j + 1] = fake;
+                          memory_to_access[j + 2] = fake;
+                          memory_to_access[j + 3] = fake;
+                          memory_to_access[j + 4] = fake;
+                          memory_to_access[j + 5] = fake;
+                          memory_to_access[j + 6] = fake;
+                          memory_to_access[j + 7] = fake;
+                       }
                     }
                     gettimeofday(&tv2, NULL);
-                    verify(memoryToWrite,numBytes);
                  }
                  double elapsedTimeSeconds = diff_s(tv1,tv2);
-                 printf("cpu to hostAlloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
-                 cudaFreeHost(memoryToRead);
-                 cudaFreeHost(memoryToWrite);
+                 printf("cpu malloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 cudaFreeHost(memory_to_access);
                  break;
               }
-   
-
- 
-
+       
    }
 
    free(cpuMallocd);

@@ -1,0 +1,192 @@
+# started on Tue Dec 16 07:27:39 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 1 -m 1' (14 runs):
+
+         5,576,125 cycles                    #    0.000 GHz                      ( +-  1.01% )
+         3,520,485 instructions              #    0.63  insns per cycle          ( +-  0.04% )
+            14,499 r02                                                           ( +-  0.28% )
+            40,599 r05                                                           ( +-  0.25% )
+            37,833 r4C                                                           ( +-  0.26% )
+             2,765 r4D                                                           ( +-  1.04% )
+               286 minor-faults                                                
+                 0 major-faults                                                
+
+       0.002628732 seconds time elapsed                                          ( +-  1.19% )
+
+# started on Tue Dec 16 07:27:39 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 1 -m 32' (14 runs):
+
+         8,196,817 cycles                    #    0.000 GHz                      ( +-  0.47% )
+         6,803,435 instructions              #    0.83  insns per cycle          ( +-  0.02% )
+            14,394 r02                                                           ( +-  0.31% )
+            40,602 r05                                                           ( +-  0.24% )
+            37,837 r4C                                                           ( +-  0.24% )
+             2,764 r4D                                                           ( +-  0.69% )
+               286 minor-faults                                                
+                 0 major-faults                                                
+
+       0.003769191 seconds time elapsed                                          ( +-  0.46% )
+
+# started on Tue Dec 16 07:27:39 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 1 -m 1024' (14 runs):
+
+        97,524,719 cycles                    #    0.000 GHz                      ( +-  0.06% )
+       113,633,077 instructions              #    1.17  insns per cycle          ( +-  0.00% )
+            16,673 r02                                                           ( +-  0.36% )
+            45,143 r05                                                           ( +-  0.31% )
+            42,062 r4C                                                           ( +-  0.32% )
+             3,081 r4D                                                           ( +-  0.90% )
+               288 minor-faults                                                
+                 0 major-faults                                                
+
+       0.042281262 seconds time elapsed                                          ( +-  0.07% )
+
+# started on Tue Dec 16 07:27:39 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 1 -m 2048' (14 runs):
+
+       189,297,421 cycles                    #    0.000 GHz                      ( +-  0.19% )
+       223,895,074 instructions              #    1.18  insns per cycle          ( +-  0.00% )
+            18,728 r02                                                           ( +-  0.34% )
+            49,048 r05                                                           ( +-  0.30% )
+            45,813 r4C                                                           ( +-  0.32% )
+             3,235 r4D                                                           ( +-  0.64% )
+               290 minor-faults                                                
+                 0 major-faults                                                
+
+       0.081824899 seconds time elapsed                                          ( +-  0.19% )
+
+# started on Tue Dec 16 07:27:40 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 1 -m 4096' (14 runs):
+
+       370,051,714 cycles                    #    0.000 GHz                      ( +-  0.10% )
+       444,419,055 instructions              #    1.20  insns per cycle          ( +-  0.00% )
+            22,842 r02                                                           ( +-  0.48% )
+            58,308 r05                                                           ( +-  0.28% )
+            54,661 r4C                                                           ( +-  0.29% )
+             3,647 r4D                                                           ( +-  0.78% )
+               295 minor-faults                                                
+                 0 major-faults                                                
+
+       0.159736452 seconds time elapsed                                          ( +-  0.10% )
+
+# started on Tue Dec 16 07:27:43 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 1 -m 8192' (14 runs):
+
+       734,867,867 cycles                    #    0.000 GHz                      ( +-  0.12% )
+       885,472,591 instructions              #    1.20  insns per cycle          ( +-  0.00% )
+            31,215 r02                                                           ( +-  0.70% )
+           106,689 r05                                                           ( +-  6.03% )
+           101,863 r4C                                                           ( +-  6.32% )
+             4,827 r4D                                                           ( +-  0.72% )
+               303 minor-faults                                                
+                 0 major-faults                                                
+
+       0.317159774 seconds time elapsed                                          ( +-  0.14% )
+
+# started on Tue Dec 16 07:27:47 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 0 -m 1' (14 runs):
+
+         5,617,164 cycles                    #    0.000 GHz                      ( +-  0.67% )
+         3,482,853 instructions              #    0.62  insns per cycle          ( +-  0.02% )
+            14,405 r02                                                           ( +-  0.30% )
+            40,885 r05                                                           ( +-  0.26% )
+            38,056 r4C                                                           ( +-  0.26% )
+             2,829 r4D                                                           ( +-  0.65% )
+               286 minor-faults                                                
+                 0 major-faults                                                
+
+       0.002643494 seconds time elapsed                                          ( +-  0.76% )
+
+# started on Tue Dec 16 07:27:47 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 0 -m 32' (14 runs):
+
+         8,977,111 cycles                    #    0.000 GHz                      ( +-  0.39% )
+         5,840,966 instructions              #    0.65  insns per cycle          ( +-  0.02% )
+            14,520 r02                                                           ( +-  0.41% )
+            41,587 r05                                                           ( +-  0.35% )
+            38,703 r4C                                                           ( +-  0.36% )
+             2,884 r4D                                                           ( +-  0.39% )
+               286 minor-faults                                                
+                 0 major-faults                                                
+
+       0.004098708 seconds time elapsed                                          ( +-  0.48% )
+
+# started on Tue Dec 16 07:27:47 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 0 -m 1024' (14 runs):
+
+       118,975,862 cycles                    #    0.000 GHz                      ( +-  0.04% )
+        82,941,342 instructions              #    0.70  insns per cycle          ( +-  0.00% )
+            17,128 r02                                                           ( +-  0.41% )
+            46,675 r05                                                           ( +-  0.36% )
+            43,394 r4C                                                           ( +-  0.35% )
+             3,281 r4D                                                           ( +-  0.81% )
+               288 minor-faults                                                
+                 0 major-faults                                                
+
+       0.051545851 seconds time elapsed                                          ( +-  0.06% )
+
+# started on Tue Dec 16 07:27:48 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 0 -m 2048' (14 runs):
+
+       232,954,971 cycles                    #    0.000 GHz                      ( +-  0.15% )
+       162,519,057 instructions              #    0.70  insns per cycle          ( +-  0.01% )
+            19,854 r02                                                           ( +-  1.28% )
+            51,325 r05                                                           ( +-  0.92% )
+            47,707 r4C                                                           ( +-  0.90% )
+             3,618 r4D                                                           ( +-  1.37% )
+               291 minor-faults                                                
+                 0 major-faults                                                
+
+       0.100830631 seconds time elapsed                                          ( +-  0.25% )
+
+# started on Tue Dec 16 07:27:49 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 0 -m 4096' (14 runs):
+
+       463,135,678 cycles                    #    0.000 GHz                      ( +-  0.12% )
+       321,649,708 instructions              #    0.69  insns per cycle          ( +-  0.00% )
+            24,870 r02                                                           ( +-  0.61% )
+            62,456 r05                                                           ( +-  0.36% )
+            57,165 r4C                                                           ( +-  0.36% )
+             5,291 r4D                                                           ( +-  0.80% )
+               295 minor-faults                                                
+                 0 major-faults                                                
+
+       0.199859000 seconds time elapsed                                          ( +-  0.12% )
+
+# started on Tue Dec 16 07:27:52 2014
+
+
+ Performance counter stats for './latencyTest -b 3 -i 10000 -r 0 -m 8192' (14 runs):
+
+       926,885,643 cycles                    #    0.000 GHz                      ( +-  0.04% )
+       639,933,640 instructions              #    0.69  insns per cycle          ( +-  0.00% )
+            35,270 r02                                                           ( +-  0.71% )
+            88,814 r05                                                           ( +-  0.27% )
+            77,213 r4C                                                           ( +-  0.30% )
+            11,601 r4D                                                           ( +-  0.29% )
+               303 minor-faults                                                
+                 0 major-faults                                                
+
+       0.399751851 seconds time elapsed                                          ( +-  0.04% )
+

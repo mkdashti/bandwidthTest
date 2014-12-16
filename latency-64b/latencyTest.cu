@@ -101,87 +101,90 @@ main( int argc, char *argv[] )
     int benchmarkType = 0;
     int locked = 0; //mlock data?
 
-      while ((opt = getopt(argc, argv, "m:b:i:r:l")) != -1) {
-      switch (opt) {
-         case 'm':
-            numBytes = atoi(optarg);
-            //assert(numBytes%16 == 0 && numBytes<=1024);
-            break;
-         case 'b':
-            benchmarkType = atoi(optarg);
-            break;
-         case 'i':
-            ITERATIONS = atoi(optarg);
-            break;
-         case 'r':
-            read = atoi(optarg);
-            break;
-         case 'l':
-            locked = 1;
-            break;
- 
-
-         default: /* '?' */
-            break;
-      }
-   }
+    while ((opt = getopt(argc, argv, "m:b:i:r:l")) != -1) {
+       switch (opt) {
+          case 'm':
+             numBytes = atoi(optarg);
+             //assert(numBytes%16 == 0 && numBytes<=1024);
+             break;
+          case 'b':
+             benchmarkType = atoi(optarg);
+             break;
+          case 'i':
+             ITERATIONS = atoi(optarg);
+             break;
+          case 'r':
+             read = atoi(optarg);
+             break;
+          case 'l':
+             locked = 1;
+             break;
 
 
-   cpuMallocd = (uint64_t *)malloc(sizeof(uint64_t)*numBytes);
-   assert(cpuMallocd);
-   HANDLE_ERROR( cudaHostAlloc( &hostAllocd, sizeof(uint64_t)*numBytes, 0 ) );
-   for(int k=0;k< numBytes ;k++){
-      cpuMallocd[k]=1;
-      hostAllocd[k]=1;
-   }
+          default: /* '?' */
+             break;
+       }
+    }
 
-   HANDLE_ERROR( cudaMalloc( &cudaMallocd, sizeof(uint64_t)*numBytes) );
-   HANDLE_ERROR( cudaMemcpy( cudaMallocd,hostAllocd, sizeof(uint64_t)*numBytes,cudaMemcpyDefault) );
 
-   int num_of_blocks=1;
-   int num_of_threads_per_block=numBytes;
-   if(numBytes>1024){
-      num_of_blocks = 16;
-      num_of_threads_per_block = numBytes/16;
-   }
+    int num_of_blocks=1;
+    int num_of_threads_per_block=numBytes;
+    if(numBytes>1024){
+       num_of_blocks = 16;
+       num_of_threads_per_block = numBytes/16;
+    }
 
-   //HANDLE_ERROR(cudaDeviceReset());  //this causes kernel launch failure!! check with cuda-memcheck
-   HANDLE_ERROR(cudaFree(0));
-   switch (benchmarkType) {
-      case 0: {//read/Write to hostAlloc'd data
-                 if(read)
-                 {
+    if(benchmarkType == 0 || benchmarkType == 1)
+       HANDLE_ERROR(cudaFree(0));
+    switch (benchmarkType) {
+       case 0: {//read/Write to hostAlloc'd data
+                  HANDLE_ERROR( cudaHostAlloc( &hostAllocd, sizeof(uint64_t)*numBytes, 0 ) );
+                  for(int k=0;k< numBytes ;k++){
+                     hostAllocd[k]=1;
+                  }
+                  if(read)
+                  {
 
-                    uint64_t *memoryToRead;
-                    HANDLE_ERROR( cudaHostAlloc( &memoryToRead, sizeof(uint64_t)*numBytes, 0 ) );
-                    for(int k=0;k< numBytes ;k++)
-                       memoryToRead[k]=5;
-                    gettimeofday(&tv1, NULL);
-                    for(int i = 0; i < ITERATIONS; i++) {
-                       readKernel<<<num_of_blocks,num_of_threads_per_block>>>(hostAllocd,memoryToRead);
-                       HANDLE_ERROR( cudaDeviceSynchronize());
-                    }
-                    gettimeofday(&tv2, NULL);
-                    cudaFreeHost(memoryToRead);
-                    //verify(hostAllocd,numBytes);
-                 }
-                 else
-                 {
-                    gettimeofday(&tv1, NULL);
-                    for(int i = 0; i < ITERATIONS; i++) {
-                       writeKernel<<<num_of_blocks,num_of_threads_per_block>>>(hostAllocd);
-                       HANDLE_ERROR( cudaDeviceSynchronize());
-                    }
-                    gettimeofday(&tv2, NULL);
-                    verify(hostAllocd,numBytes);
+                     uint64_t *memoryToRead;
+                     HANDLE_ERROR( cudaHostAlloc( &memoryToRead, sizeof(uint64_t)*numBytes, 0 ) );
+                     for(int k=0;k< numBytes ;k++)
+                        memoryToRead[k]=5;
+                     gettimeofday(&tv1, NULL);
+                     for(int i = 0; i < ITERATIONS; i++) {
+                        readKernel<<<num_of_blocks,num_of_threads_per_block>>>(hostAllocd,memoryToRead);
+                        HANDLE_ERROR( cudaDeviceSynchronize());
+                     }
+                     gettimeofday(&tv2, NULL);
+                     cudaFreeHost(memoryToRead);
+                     //verify(hostAllocd,numBytes);
+                  }
+                  else
+                  {
+                     gettimeofday(&tv1, NULL);
+                     for(int i = 0; i < ITERATIONS; i++) {
+                        writeKernel<<<num_of_blocks,num_of_threads_per_block>>>(hostAllocd);
+                        HANDLE_ERROR( cudaDeviceSynchronize());
+                     }
+                     gettimeofday(&tv2, NULL);
+                     verify(hostAllocd,numBytes);
                  }
                  HANDLE_ERROR( cudaGetLastError());
                  double elapsedTimeSeconds = diff_s(tv1,tv2);
                  printf("HostAlloc [%s] Latency including kernel launch overhead = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 
+                 cudaFreeHost(hostAllocd);
                  break;
               }
    
       case 1: {//read/Write to cudaMalloc'd data
+                 cpuMallocd = (uint64_t *)malloc(sizeof(uint64_t)*numBytes);
+                 assert(cpuMallocd);
+                 for(int k=0;k< numBytes ;k++){
+                    cpuMallocd[k]=1;
+                 }
+
+                 HANDLE_ERROR( cudaMalloc( &cudaMallocd, sizeof(uint64_t)*numBytes) );
+                 HANDLE_ERROR( cudaMemcpy( cudaMallocd,cpuMallocd, sizeof(uint64_t)*numBytes,cudaMemcpyDefault) );
                  if(read)
                  {
 
@@ -213,6 +216,8 @@ main( int argc, char *argv[] )
                  HANDLE_ERROR( cudaGetLastError());
                  double elapsedTimeSeconds = diff_s(tv1,tv2);
                  printf("CudaMalloc [%s] Latency including kernel launch overhead = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 free(cpuMallocd);
+                 cudaFree(cudaMallocd);
                  break;
               }
 
@@ -372,11 +377,9 @@ main( int argc, char *argv[] )
                  break;
               }
        
-   }
+    }
 
-   free(cpuMallocd);
-   cudaFree(cudaMallocd);
-   cudaFreeHost(hostAllocd);
-   cudaDeviceReset();
-   return 0;
+    if(benchmarkType == 0 || benchmarkType == 1)
+       cudaDeviceReset();
+    return 0;
 }

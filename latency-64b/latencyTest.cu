@@ -310,6 +310,8 @@ main( int argc, char *argv[] )
                     double elapsedTimeSeconds = diff_s(tv1,tv2);
                     printf("cpu malloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
                  }
+          //       printf("Press enter to continue...\n");
+          //       getchar();
                  free(memory_to_access);
                  break;
               }
@@ -380,8 +382,10 @@ main( int argc, char *argv[] )
                        }
                     }
                     double elapsedTimeSeconds = diff_s(tv1,tv2);
-                    printf("cpu malloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                    printf("cpu hostAlloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
                  }
+            //     printf("Press enter to continue...\n");
+            //     getchar();
                  cudaFreeHost(memory_to_access);
                  break;
               }

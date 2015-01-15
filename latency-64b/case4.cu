@@ -25,15 +25,20 @@ static void HandleError( cudaError_t err, const char *file, int line ) {
 main( int argc, char *argv[] )
 {
    int ITERATIONS = 1;
-   int numBytes = 1024;
+   //int numBytes = 131072;
+   int numBytes = 131072*2;
 
    uint64_t *memory_to_access;
-   HANDLE_ERROR(cudaHostAlloc(&memory_to_access,sizeof(uint64_t)*numBytes,0));
+   //HANDLE_ERROR(cudaHostAlloc(&memory_to_access,sizeof(uint64_t)*numBytes,0));
+   HANDLE_ERROR(cudaMallocManaged(&memory_to_access,sizeof(uint64_t)*numBytes));
    for(int k=0;k< numBytes ;k++)
       memory_to_access[k]=5;
+
+   printf("address = %p\n",memory_to_access);
    printf("Press enter to continue...\n");
    getchar();
-             
+  
+   
    uint64_t fake=0;
    for(int i=0; i<ITERATIONS; i++) {
       for (int j = 0; j < (numBytes); j += 8) {
@@ -50,7 +55,8 @@ main( int argc, char *argv[] )
    printf("Press enter to continue...\n");
    getchar();
     
-   cudaFreeHost(memory_to_access);
+   //cudaFreeHost(memory_to_access);
+   cudaFree(memory_to_access);
 
    return 0;
 }

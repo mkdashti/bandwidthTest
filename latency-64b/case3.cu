@@ -6,13 +6,15 @@
    int
 main( int argc, char *argv[] )
 {
-   int ITERATIONS = 100000;
-   int numBytes = 1024;
+   int ITERATIONS = 1;
+   //int numBytes = 131072;
+   int numBytes = 131072*2;
 
    uint64_t *memory_to_access = (uint64_t *)malloc(sizeof(uint64_t)*numBytes );
    for(int k=0;k< numBytes ;k++)
       memory_to_access[k]=5;
 
+   printf("address = %p\n",memory_to_access);
    printf("Press enter to continue...\n");
    getchar();
              
@@ -29,8 +31,8 @@ main( int argc, char *argv[] )
          fake += memory_to_access[j + 7];
       }
    }
-   printf("Press enter to continue...\n");
-   getchar();
+   //printf("Press enter to continue...\n");
+   //getchar();
     
    free(memory_to_access);
 

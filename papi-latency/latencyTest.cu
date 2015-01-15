@@ -9,7 +9,7 @@
 
 #include <papi.h>
 
-#define NUM_EVENTS 1
+#define NUM_EVENTS 2
 #define PAPI
 
 
@@ -153,7 +153,7 @@ main( int argc, char *argv[] )
 	int retval, i;
 	int EventSet = PAPI_NULL;
 	long long values[NUM_EVENTS];
-   char *EventName[] = { "PERF_COUNT_SW_PAGE_FAULTS" };
+   char *EventName[] = { "L1I_TLB_REFILL","L1D_TLB_REFILL" };
 	int events[NUM_EVENTS];
 	int eventCount = 0;
 	
@@ -191,13 +191,9 @@ main( int argc, char *argv[] )
 	retval = PAPI_add_events( EventSet, events, eventCount );
 	if( retval != PAPI_OK )
 		fprintf( stderr, "PAPI_add_events failed\n" );
-	
-	retval = PAPI_start( EventSet );
-	if( retval != PAPI_OK )
-		fprintf( stderr, "PAPI_start failed\n" );
+
 #endif
-
-
+	
 
     switch (benchmarkType) {
        case 0: {//read/Write to hostAlloc'd data
@@ -312,11 +308,23 @@ main( int argc, char *argv[] )
                        uint64_t fake;
                        if(numBytes<8) {
                           gettimeofday(&tv1, NULL);
+#ifdef PAPI
+                          retval = PAPI_start( EventSet );
+                          if( retval != PAPI_OK )
+                             fprintf( stderr, "PAPI_start failed\n" );
+#endif
+ 
                           for(int i=0; i<ITERATIONS; i++) {
                              for (int j = 0; j < (numBytes); j++) {
                                 fake += memory_to_access[j];
                              }
                           }
+#ifdef PAPI
+                          retval = PAPI_stop( EventSet, values );
+                          if( retval != PAPI_OK )
+                             fprintf( stderr, "PAPI_stop failed\n" );
+#endif
+ 
                           gettimeofday(&tv2, NULL);
                        }
                        else {
@@ -385,11 +393,21 @@ main( int argc, char *argv[] )
                        uint64_t fake;
                        if(numBytes<8) {
                           gettimeofday(&tv1, NULL);
+#ifdef PAPI
+                          retval = PAPI_start( EventSet );
+                          if( retval != PAPI_OK )
+                             fprintf( stderr, "PAPI_start failed\n" );
+#endif
                           for(int i=0; i<ITERATIONS; i++) {
                              for (int j = 0; j < (numBytes); j++) {
                                 fake += memory_to_access[j];
                              }
                           }
+#ifdef PAPI
+                          retval = PAPI_stop( EventSet, values );
+                          if( retval != PAPI_OK )
+                             fprintf( stderr, "PAPI_stop failed\n" );
+#endif
                           gettimeofday(&tv2, NULL);
                        }
                        else {
@@ -454,10 +472,6 @@ main( int argc, char *argv[] )
        cudaDeviceReset();
 
 #ifdef PAPI
-	retval = PAPI_stop( EventSet, values );
-	if( retval != PAPI_OK )
-		fprintf( stderr, "PAPI_stop failed\n" );
-
 	retval = PAPI_cleanup_eventset(EventSet);
 	if( retval != PAPI_OK )
 		fprintf(stderr, "PAPI_cleanup_eventset failed\n");

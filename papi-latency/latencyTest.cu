@@ -104,7 +104,7 @@ main( int argc, char *argv[] )
     int numBytes = 1;
     struct timeval  tv1, tv2;
     int opt;
-    int read=0; //read benchmark? or write?
+    int read=1; //read benchmark? or write?
     int benchmarkType = 0;
     int locked = 0; //mlock data?
     int dryRun = 0; //dry run to measure noise TLB misses/...etc
@@ -465,6 +465,91 @@ main( int argc, char *argv[] )
                  cudaFreeHost(memory_to_access);
                  break;
               }
+      case 5: {//read/Write to cpu but mallocManaged data
+                 uint64_t *memory_to_access;
+                 HANDLE_ERROR(cudaMallocManaged(&memory_to_access,sizeof(uint64_t)*numBytes));
+                 if(!dryRun) {
+                    if(read)
+                    {
+                       for(int k=0;k< numBytes ;k++)
+                          memory_to_access[k]=5;
+
+                       uint64_t fake;
+                       if(numBytes<8) {
+                          gettimeofday(&tv1, NULL);
+#ifdef PAPI
+                          retval = PAPI_start( EventSet );
+                          if( retval != PAPI_OK )
+                             fprintf( stderr, "PAPI_start failed\n" );
+#endif
+                          for(int i=0; i<ITERATIONS; i++) {
+                             for (int j = 0; j < (numBytes); j++) {
+                                fake += memory_to_access[j];
+                             }
+                          }
+#ifdef PAPI
+                          retval = PAPI_stop( EventSet, values );
+                          if( retval != PAPI_OK )
+                             fprintf( stderr, "PAPI_stop failed\n" );
+#endif
+                          gettimeofday(&tv2, NULL);
+                       }
+                       else {
+                          gettimeofday(&tv1, NULL);
+                          for(int i=0; i<ITERATIONS; i++) {
+                             for (int j = 0; j < (numBytes); j += 8) {
+                                fake += memory_to_access[j];
+                                fake += memory_to_access[j + 1];
+                                fake += memory_to_access[j + 2];
+                                fake += memory_to_access[j + 3];
+                                fake += memory_to_access[j + 4];
+                                fake += memory_to_access[j + 5];
+                                fake += memory_to_access[j + 6];
+                                fake += memory_to_access[j + 7];
+                             }
+                          }
+                          gettimeofday(&tv2, NULL);
+                       }
+                    }
+                    else
+                    {
+                       uint64_t fake=5;
+                       if(numBytes<8) {
+                          gettimeofday(&tv1, NULL);
+                          for(int i=0; i<ITERATIONS; i++) {
+                             for (int j = 0; j < (numBytes); j++) {
+                                memory_to_access[j] = fake;
+                             }
+                          }
+                          gettimeofday(&tv2, NULL);
+                       }
+
+                       else {
+                          gettimeofday(&tv1, NULL);
+                          for(int i=0; i<ITERATIONS; i++) {
+                             for (int j = 0; j < (numBytes); j += 8) {
+                                memory_to_access[j] = fake;
+                                memory_to_access[j + 1] = fake;
+                                memory_to_access[j + 2] = fake;
+                                memory_to_access[j + 3] = fake;
+                                memory_to_access[j + 4] = fake;
+                                memory_to_access[j + 5] = fake;
+                                memory_to_access[j + 6] = fake;
+                                memory_to_access[j + 7] = fake;
+                             }
+                          }
+                          gettimeofday(&tv2, NULL);
+                       }
+                    }
+                    double elapsedTimeSeconds = diff_s(tv1,tv2);
+                    printf("cpu hostAlloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 }
+            //     printf("Press enter to continue...\n");
+            //     getchar();
+                 cudaFree(memory_to_access);
+                 break;
+              }
+
 
     }
 

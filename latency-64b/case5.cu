@@ -30,7 +30,7 @@ main( int argc, char *argv[] )
 
    uint64_t *memory_to_access;
    //HANDLE_ERROR(cudaHostAlloc(&memory_to_access,sizeof(uint64_t)*numBytes,0));
-   HANDLE_ERROR(cudaHostAlloc(&memory_to_access,sizeof(uint64_t)*numBytes,0));
+   HANDLE_ERROR(cudaMallocManaged(&memory_to_access,sizeof(uint64_t)*numBytes));
    for(int k=0;k< numBytes ;k++)
       memory_to_access[k]=5;
 
@@ -56,7 +56,7 @@ main( int argc, char *argv[] )
    //getchar();
     
    //cudaFreeHost(memory_to_access);
-   cudaFreeHost(memory_to_access);
+   cudaFree(memory_to_access);
 
    return 0;
 }

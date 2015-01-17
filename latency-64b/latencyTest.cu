@@ -317,7 +317,10 @@ main( int argc, char *argv[] )
               }
       case 4: {//read/Write to cpu but hostsllocd data
                  uint64_t *memory_to_access;
-                 HANDLE_ERROR(cudaHostAlloc(&memory_to_access,sizeof(uint64_t)*numBytes,0));
+                 HANDLE_ERROR(cudaSetDevice(0));
+                 HANDLE_ERROR(cudaSetDeviceFlags(cudaDeviceMapHost));
+                 HANDLE_ERROR(cudaFree(0));
+                 HANDLE_ERROR(cudaHostAlloc(&memory_to_access,sizeof(uint64_t)*numBytes,cudaHostAllocMapped));
                  if(!dryRun) {
                     if(read)
                     {

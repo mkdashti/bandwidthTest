@@ -126,8 +126,8 @@ int main( int argc, char *argv[] )
                   break;
                }
        case 1: {// cudaHostAlloc
-                  HANDLE_ERROR( cudaHostAlloc( &in, sizeof(uint64_t)*numBytes,cudaHostAllocMapped) );
-                  HANDLE_ERROR( cudaHostAlloc( &out, sizeof(uint64_t)*numBytes,cudaHostAllocMapped) );
+                  HANDLE_ERROR( cudaHostAlloc( &in, sizeof(uint64_t)*numBytes,0) );
+                  HANDLE_ERROR( cudaHostAlloc( &out, sizeof(uint64_t)*numBytes,0) );
                   for(int k=0;k< numBytes ;k++){
                      in[k]=1;
                   }

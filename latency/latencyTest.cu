@@ -297,7 +297,45 @@ main( int argc, char *argv[] )
                  break;
               }
    
+       case 5: {//read/Write to cpu but mallocmanaged data
+                  unsigned char *memoryToRead,*memoryToWrite;
+                  HANDLE_ERROR(cudaMallocManaged(&memoryToRead,sizeof(unsigned char)*numBytes));
+                  HANDLE_ERROR(cudaMallocManaged(&memoryToWrite,sizeof(unsigned char)*numBytes ));
 
+                 if(read)
+                 {
+
+                    int temp;
+                    for(int k=0;k< numBytes ;k++)
+                       memoryToRead[k]=5;
+                    gettimeofday(&tv1, NULL);
+                    for(int i = 0; i < ITERATIONS; i++) {
+                       for(int j=0; j<numBytes; j++){
+                          temp=memoryToRead[j];
+                          if(!temp)
+                             memoryToWrite[j]=temp;
+                       }
+                    }
+                    gettimeofday(&tv2, NULL);
+                    //verify(cpuMallocd,numBytes);
+                 }
+                 else
+                 {
+                    gettimeofday(&tv1, NULL);
+                    for(int i = 0; i < ITERATIONS; i++) {
+                       for(int k=0;k< numBytes ;k++)
+                          memoryToWrite[k]=5;
+                    }
+                    gettimeofday(&tv2, NULL);
+                    verify(memoryToWrite,numBytes);
+                 }
+                 double elapsedTimeSeconds = diff_s(tv1,tv2);
+                 printf("cpu to hostAlloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                 cudaFree(memoryToRead);
+                 cudaFree(memoryToWrite);
+                 break;
+              }
+ 
  
 
    }

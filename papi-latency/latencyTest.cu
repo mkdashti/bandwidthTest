@@ -542,7 +542,7 @@ main( int argc, char *argv[] )
                        }
                     }
                     double elapsedTimeSeconds = diff_s(tv1,tv2);
-                    printf("cpu hostAlloc [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
+                    printf("cpu mallocManaged [%s] Latency = %f us\n",(read==1)?"read":"write",elapsedTimeSeconds*1e6/(float)ITERATIONS);
                  }
             //     printf("Press enter to continue...\n");
             //     getchar();

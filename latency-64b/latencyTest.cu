@@ -312,6 +312,8 @@ main( int argc, char *argv[] )
                  }
           //       printf("Press enter to continue...\n");
           //       getchar();
+
+                 verify(memory_to_access,numBytes);
                  free(memory_to_access);
                  break;
               }
@@ -389,6 +391,8 @@ main( int argc, char *argv[] )
                  }
             //     printf("Press enter to continue...\n");
             //     getchar();
+
+                 verify(memory_to_access,numBytes);
                  cudaFreeHost(memory_to_access);
                  break;
               }
@@ -463,6 +467,8 @@ main( int argc, char *argv[] )
                  }
             //     printf("Press enter to continue...\n");
             //     getchar();
+
+                 verify(memory_to_access,numBytes);
                  cudaFree(memory_to_access);
                  break;
               }

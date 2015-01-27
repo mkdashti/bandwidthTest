@@ -9,7 +9,7 @@
 
 //#define _GNU_SOURCE
 #include <sys/syscall.h>
-#define gpu_hook() syscall(380)
+#define gpu_hook(x) syscall(380,x)
 
 
 static void HandleError( cudaError_t err, const char *file, int line ) {
@@ -132,7 +132,7 @@ int main( int argc, char *argv[] )
                   break;
                }
        case 1: {// cudaHostAlloc
-                  gpu_hook();
+                  gpu_hook(1);
                   HANDLE_ERROR( cudaHostAlloc( &in, sizeof(uint64_t)*numBytes,0) );
                   HANDLE_ERROR( cudaHostAlloc( &out, sizeof(uint64_t)*numBytes,0) );
                   //printf("pid from gpu_hook %d\n",pid);
@@ -143,6 +143,7 @@ int main( int argc, char *argv[] )
                   gettimeofday(&tv1, NULL);
                   for(int i=0; i<ITERATIONS; i++) {
                      cpu_compute(in, out, numBytes);
+                     gpu_hook(2);
                      kernel<<<num_of_blocks,num_of_threads_per_block>>>(in,out);
                   //   HANDLE_ERROR(cudaDeviceSynchronize());
                   }

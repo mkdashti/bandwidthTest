@@ -39,6 +39,7 @@ __global__ void kernel(uint64_t *in, uint64_t *out)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
    out[tid] = in[tid]+tid;
+   //__threadfence_system();
 }
 __global__ void nullKernel(int *memory)
 {
@@ -140,12 +141,13 @@ int main( int argc, char *argv[] )
                      in[k]=1;
                   }
 
+                  //gpu_hook(2);
                   gettimeofday(&tv1, NULL);
                   for(int i=0; i<ITERATIONS; i++) {
                      cpu_compute(in, out, numBytes);
                      gpu_hook(2);
                      kernel<<<num_of_blocks,num_of_threads_per_block>>>(in,out);
-                  //   HANDLE_ERROR(cudaDeviceSynchronize());
+                     HANDLE_ERROR(cudaDeviceSynchronize());
                   }
                   verify(in,out,numBytes);
                   gettimeofday(&tv2, NULL);

@@ -32,6 +32,8 @@ inline double diff_s(struct timeval start, struct timeval end)
 __global__ void kernel(uint64_t *in, uint64_t *out)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
+   //in = (uint64_t *)malloc(sizeof(uint64_t));
+   //out = (uint64_t *)malloc(sizeof(uint64_t));
    out[tid] = in[tid]+tid;
 }
 __global__ void nullKernel(void)
@@ -60,12 +62,11 @@ void cpu_compute(uint64_t *in, uint64_t *out, int numBytes)
 int main( int argc, char *argv[] )
 {
     uint64_t *in, *out, *in_d, *out_d;
-    int ITERATIONS = 1;
     int numBytes = 1;
     int opt;
     int benchmarkType = 0;
 
-    while ((opt = getopt(argc, argv, "m:b:i:")) != -1) {
+    while ((opt = getopt(argc, argv, "m:b:")) != -1) {
        switch (opt) {
           case 'm':
              numBytes = atoi(optarg);
@@ -73,9 +74,6 @@ int main( int argc, char *argv[] )
              break;
           case 'b':
              benchmarkType = atoi(optarg);
-             break;
-          case 'i':
-             ITERATIONS = atoi(optarg);
              break;
 
           default: /* '?' */
@@ -92,9 +90,54 @@ int main( int argc, char *argv[] )
     }
 
     HANDLE_ERROR(cudaFree(0));
+    //cudaHostAlloc(&in,numBytes*sizeof(uint64_t),0);
+    //cudaHostAlloc(&out,numBytes*sizeof(uint64_t),0);
 
-    for(int i=0; i<ITERATIONS; i++)
-       nullKernel<<<num_of_blocks,num_of_threads_per_block>>>();
-//    cudaDeviceReset();
+    //printf("hostalloc %p\n",in);
+    //printf("hostalloc %p\n",out);
+    
+    //cudaMallocManaged(&in_d,numBytes*sizeof(uint64_t));
+    //cudaMallocManaged(&out_d,numBytes*sizeof(uint64_t));
+
+    //printf("managed %p\n",in_d);
+    //printf("managed %p\n",out_d);
+
+
+    printf("Press enter to continue...\n");
+    getchar();
+
+    cudaHostAlloc(&in,numBytes*sizeof(uint64_t),0);
+    cudaHostAlloc(&out,numBytes*sizeof(uint64_t),0);
+   
+    printf("Press enter to continue...\n");
+    getchar();
+
+    cudaMallocManaged(&in_d,numBytes*sizeof(uint64_t));
+    cudaMallocManaged(&out_d,numBytes*sizeof(uint64_t));
+
+    printf("Press enter to continue...\n");
+    getchar();
+
+    kernel<<<num_of_blocks,num_of_threads_per_block>>>(in,out);
+
+    printf("Press enter to continue...\n");
+    getchar();
+
+    cudaDeviceSynchronize();
+    cpu_compute(in,out,numBytes);
+
+    printf("Press enter to continue...\n");
+    getchar();
+    cudaFreeHost(in);
+    cudaFreeHost(out);
+    
+    printf("Press enter to continue...\n");
+    getchar();
+    cudaFree(in_d);
+    cudaFree(out_d);
+
+    printf("Press enter to continue...\n");
+    getchar();
+   
     return 0;
 }

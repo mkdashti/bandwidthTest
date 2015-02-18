@@ -65,8 +65,9 @@ int main( int argc, char *argv[] )
     struct timeval  tv1, tv2;
     int opt;
     int benchmarkType = 0;
+    int cpu_verify = 0;
 
-    while ((opt = getopt(argc, argv, "m:b:i:")) != -1) {
+    while ((opt = getopt(argc, argv, "m:b:i:c:")) != -1) {
        switch (opt) {
           case 'm':
              numBytes = atoi(optarg);
@@ -78,6 +79,10 @@ int main( int argc, char *argv[] )
           case 'i':
              ITERATIONS = atoi(optarg);
              break;
+          case 'c':
+             cpu_verify = atoi(optarg);
+             break;
+
 
           default: /* '?' */
              break;
@@ -112,7 +117,8 @@ int main( int argc, char *argv[] )
                      kernel<<<num_of_blocks,num_of_threads_per_block>>>(in_d,out_d);
                      HANDLE_ERROR( cudaMemcpy(out,out_d, sizeof(uint64_t)*numBytes,cudaMemcpyDefault) );
                   }
-                  verify(in,out,numBytes);
+                  if(cpu_verify)
+                     verify(in,out,numBytes);
                   gettimeofday(&tv2, NULL);
 
                   HANDLE_ERROR( cudaGetLastError());
@@ -138,7 +144,8 @@ int main( int argc, char *argv[] )
                      kernel<<<num_of_blocks,num_of_threads_per_block>>>(in,out);
                   //   HANDLE_ERROR(cudaDeviceSynchronize());
                   }
-                  verify(in,out,numBytes);
+                  if(cpu_verify)
+                     verify(in,out,numBytes);
                   gettimeofday(&tv2, NULL);
 
                   HANDLE_ERROR( cudaGetLastError());
@@ -161,7 +168,8 @@ int main( int argc, char *argv[] )
                      kernel<<<num_of_blocks,num_of_threads_per_block>>>(in,out);
                      HANDLE_ERROR(cudaDeviceSynchronize());
                   }
-                  verify(in,out,numBytes);
+                  if(cpu_verify)
+                     verify(in,out,numBytes);
                   gettimeofday(&tv2, NULL);
 
                   HANDLE_ERROR( cudaGetLastError());
@@ -195,7 +203,8 @@ int main( int argc, char *argv[] )
                   HANDLE_ERROR( cudaMemcpy(out,out_d, sizeof(uint64_t)*numBytes,cudaMemcpyDefault) );
 
                   gettimeofday(&tv1, NULL);
-                  verify(in,out,numBytes);
+                  if(cpu_verify)
+                     verify(in,out,numBytes);
                   gettimeofday(&tv2, NULL);
 
                   HANDLE_ERROR( cudaGetLastError());

@@ -29,21 +29,31 @@ inline double diff_s(struct timeval start, struct timeval end)
    return ((double) (end.tv_usec - start.tv_usec) / 1000000 + (double) (end.tv_sec - start.tv_sec));
 }
 
-__global__ void kernel(uint64_t *in, uint64_t *out, int threads)
+typedef struct blob {
+   uint64_t data;
+}theblob;
+
+__global__ void kernel(theblob *in, theblob *out, int threads)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
+   //printf("OUTSIDE hostalloc tid=%d\n",tid);
    //in = (uint64_t *)malloc(sizeof(uint64_t));
    //out = (uint64_t *)malloc(sizeof(uint64_t));
-   if(tid < threads)
-      out[tid] = in[tid]+tid;
+   if(tid < threads){
+     // printf("hostalloc tid=%d\n",tid);
+      out[tid].data = in[tid].data+tid;
+   }
 }
-__global__ void kernel_d(uint64_t *in, uint64_t *out, int threads)
+__global__ void kernel_d(theblob *in, theblob *out, int threads)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
+   //printf("OUTSIDE managed tid=%d\n",tid);
    //in = (uint64_t *)malloc(sizeof(uint64_t));
    //out = (uint64_t *)malloc(sizeof(uint64_t));
-   if(tid < threads)
-      out[tid] = in[tid]+tid;
+   if(tid < threads){
+     // printf("managed tid=%d\n",tid);
+      out[tid].data = in[tid].data+tid;
+   }
 }
 
 
@@ -51,11 +61,11 @@ __global__ void nullKernel(void)
 {
 
 }
-void verify(uint64_t *in, uint64_t *out, int numBytes)
+void verify(theblob *in, theblob *out, int numBytes)
 {
    int error = 0;
    for(int i =0; i<numBytes; i++)
-      if(out[i]!=in[i]+i)
+      if(out[i].data!=in[i].data+i)
          error = 1;
    if(error)
       printf("ERROR in verification!\n");
@@ -63,16 +73,15 @@ void verify(uint64_t *in, uint64_t *out, int numBytes)
       printf("SUCCESS!\n");
 
 }
-void cpu_compute(uint64_t *in, uint64_t *out, int numBytes)
+void cpu_compute(theblob *in, theblob *out, int numBytes)
 {
    for(int i =0; i<numBytes; i++)
-      out[i]=in[i]+i;
+      out[i].data=in[i].data+i;
 
 }
-
 int main( int argc, char *argv[] )
 {
-    uint64_t *in, *out, *in_d, *out_d;
+    theblob *in, *out, *in_d, *out_d;
     int opt;
     int iterations = 1;
     int blocks = 1;
@@ -113,14 +122,14 @@ int main( int argc, char *argv[] )
     //printf("Press enter to continue...\n");
     //getchar();
 
-    cudaHostAlloc(&in,blocks*threads*sizeof(uint64_t),0);
-    cudaHostAlloc(&out,blocks*threads*sizeof(uint64_t),0);
+    cudaHostAlloc(&in,blocks*threads*sizeof(theblob),0);
+    cudaHostAlloc(&out,blocks*threads*sizeof(theblob),0);
    
     //printf("Press enter to continue...\n");
     //getchar();
 
-    cudaMallocManaged(&in_d,blocks*threads*sizeof(uint64_t));
-    cudaMallocManaged(&out_d,blocks*threads*sizeof(uint64_t));
+    cudaMallocManaged(&in_d,blocks*threads*sizeof(theblob));
+    cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));
 
     //printf("Press enter to continue...\n");
     //getchar();

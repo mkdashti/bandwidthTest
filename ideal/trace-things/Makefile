@@ -12,5 +12,8 @@ EXE = ideal
 
 release: $(SRC)
 	$(CC) -o $(EXE) $(SRC)
+ptx: $(SRC)
+	$(CC) -ptx $(SRC)
+
 clean: $(SRC)
 	rm -f $(EXE) *.o

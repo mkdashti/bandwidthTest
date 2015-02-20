@@ -31,28 +31,31 @@ inline double diff_s(struct timeval start, struct timeval end)
 
 typedef struct blob {
    uint64_t data;
+   //char pad[24];
 }theblob;
 
 __global__ void kernel(theblob *in, theblob *out, int threads)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
-   //printf("OUTSIDE hostalloc tid=%d\n",tid);
-   //in = (uint64_t *)malloc(sizeof(uint64_t));
-   //out = (uint64_t *)malloc(sizeof(uint64_t));
+   //int temp;
    if(tid < threads){
-     // printf("hostalloc tid=%d\n",tid);
+      //printf("hostalloc out addr =%p, in addr =%p\n",&(out[tid].data), &(in[tid].data));
       out[tid].data = in[tid].data+tid;
+      //temp = in[tid].data+tid;
+      //out[tid].data = 5;
+      //out[0].data = in[0].data+tid;
    }
 }
 __global__ void kernel_d(theblob *in, theblob *out, int threads)
 {
    int tid = threadIdx.x + blockIdx.x*blockDim.x;
-   //printf("OUTSIDE managed tid=%d\n",tid);
-   //in = (uint64_t *)malloc(sizeof(uint64_t));
-   //out = (uint64_t *)malloc(sizeof(uint64_t));
+   //int temp;
    if(tid < threads){
-     // printf("managed tid=%d\n",tid);
+      //printf("managed out addr =%p, in addr =%p\n",&(out[tid].data), &(in[tid].data));
       out[tid].data = in[tid].data+tid;
+      //temp = in[tid].data+tid;
+      //out[tid].data = 5;
+      //out[0].data = in[0].data+tid;
    }
 }
 

@@ -6,6 +6,10 @@
 #include <time.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+
+#include <sys/syscall.h>
+#define gpu_hook(x) syscall(380,x)
+
 static void HandleError( cudaError_t err, const char *file, int line ) {
     
     if (err != cudaSuccess) {
@@ -113,9 +117,20 @@ int main( int argc, char *argv[] )
 
     HANDLE_ERROR(cudaFree(0));
 
+    gpu_hook(1);
+
+    //printf("done with init...\n");
+    //getchar();
+
+
     
     cudaHostAlloc(&in,blocks*threads*sizeof(theblob),0);
     cudaHostAlloc(&out,blocks*threads*sizeof(theblob),0);
+
+
+    //printf("done with init and memory allocations...\n");
+    //getchar();
+
 
     cudaMallocManaged(&in_d,blocks*threads*sizeof(theblob));
     cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));

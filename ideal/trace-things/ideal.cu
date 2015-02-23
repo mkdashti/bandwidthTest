@@ -44,7 +44,8 @@ __global__ void kernel(theblob *in, theblob *out, int threads)
       //int temp = in[tid].data+tid;
       //if(temp == 999999)
       //   out[tid].data = 5;
-      out[0].data += 5;
+   out[0].data += 5;
+
    //}
 }
 __global__ void kernel_d(theblob *in, theblob *out, int threads)
@@ -57,7 +58,7 @@ __global__ void kernel_d(theblob *in, theblob *out, int threads)
       //int temp = in[tid].data+tid;
       //if(temp == 999999)
       //   out[tid].data = 5;
-      out[0].data += 5;
+   out[0].data += 5;
    //}
 }
 
@@ -153,5 +154,6 @@ int main( int argc, char *argv[] )
     cudaFree(in_d);
     cudaFree(out_d);
 
+    cudaDeviceReset();
     return 0;
 }

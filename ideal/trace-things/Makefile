@@ -14,6 +14,7 @@ release: $(SRC)
 	$(CC) -o $(EXE) $(SRC)
 ptx: $(SRC)
 	$(CC) -ptx $(SRC)
-
+debug: $(SRC)
+	$(CC) -g -G -o $(EXE) $(SRC)
 clean: $(SRC)
 	rm -f $(EXE) *.o

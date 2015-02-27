@@ -35,12 +35,13 @@ inline double diff_s(struct timeval start, struct timeval end)
 
 typedef struct blob {
    uint64_t data;
-   char pad[24];
+   //char pad[120];
 }theblob;
 
-__global__ void kernel(theblob *in, theblob *out, int threads)
+__global__ void kernel(theblob *out, int threads)
 {
-   //int tid = threadIdx.x + blockIdx.x*blockDim.x;
+   //__shared__ uint64_t temp[512];
+   int tid = threadIdx.x + blockIdx.x*blockDim.x;
    //if(tid < threads){
       //printf("hostalloc out addr =%p, in addr =%p\n",&(out[tid].data), &(in[tid].data));
       //printf("hostalloc out addr =%p, in addr =%p\n",&(out[0].data), &(in[0].data));
@@ -48,13 +49,18 @@ __global__ void kernel(theblob *in, theblob *out, int threads)
       //int temp = in[tid].data+tid;
       //if(temp == 999999)
       //   out[tid].data = 5;
+   //out[0].data += 5;
+   //temp = in[tid].data;
+   //out[tid].data = 5;
+  // temp[tid]=out[tid].data;
    out[0].data += 5;
 
    //}
 }
-__global__ void kernel_d(theblob *in, theblob *out, int threads)
+__global__ void kernel_d(theblob *out, int threads)
 {
-   //int tid = threadIdx.x + blockIdx.x*blockDim.x;
+   //__shared__ uint64_t temp[512];
+   int tid = threadIdx.x + blockIdx.x*blockDim.x;
    //if(tid < threads){
       //printf("managed out addr =%p, in addr =%p\n",&(out[tid].data), &(in[tid].data));
       //printf("managed  out addr =%p, in addr =%p\n",&(out[0].data), &(in[0].data));
@@ -62,6 +68,10 @@ __global__ void kernel_d(theblob *in, theblob *out, int threads)
       //int temp = in[tid].data+tid;
       //if(temp == 999999)
       //   out[tid].data = 5;
+   //out[0].data += 5;
+   //temp = in[tid].data;
+   //out[tid].data = 5;
+   //temp[tid]=out[tid].data;
    out[0].data += 5;
    //}
 }
@@ -83,15 +93,15 @@ void verify(theblob *in, theblob *out, int numBytes)
       printf("SUCCESS!\n");
 
 }
-void cpu_compute(theblob *in, theblob *out, int numBytes)
+void cpu_compute(theblob *out, int numBytes)
 {
    for(int i =0; i<numBytes; i++)
-      out[i].data=in[i].data+i;
+      out[i].data=out[i].data+1;
 
 }
 int main( int argc, char *argv[] )
 {
-    theblob *in, *out, *in_d, *out_d;
+    theblob  *out, *out_d;
     int opt;
     int iterations = 1;
     int blocks = 1;
@@ -117,23 +127,25 @@ int main( int argc, char *argv[] )
 
     HANDLE_ERROR(cudaFree(0));
 
-    gpu_hook(1);
+    //gpu_hook(1);
 
     //printf("done with init...\n");
     //getchar();
 
 
     
-    cudaHostAlloc(&in,blocks*threads*sizeof(theblob),0);
     cudaHostAlloc(&out,blocks*threads*sizeof(theblob),0);
+
+   // out[0].data = 14;
+
+   // printf("%lu\n",(unsigned long)out[0].data);
 
 
     //printf("done with init and memory allocations...\n");
     //getchar();
 
 
-    cudaMallocManaged(&in_d,blocks*threads*sizeof(theblob));
-    cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));
+//    cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));
 
    
     //printf("done with init and memory allocations...\n");
@@ -141,15 +153,15 @@ int main( int argc, char *argv[] )
 
     for(int i = 0; i<iterations; i++) {
        
-       kernel<<<blocks,threads>>>(in,out,blocks*threads);
+       kernel<<<blocks,threads>>>(out,blocks*threads);
        cudaDeviceSynchronize();
 
       // printf("done with hostalloc kernel...\n");
       // getchar();
 
 
-       kernel_d<<<blocks,threads>>>(in_d,out_d,blocks*threads);
-       cudaDeviceSynchronize();
+    //   kernel_d<<<blocks,threads>>>(out_d,blocks*threads);
+    //   cudaDeviceSynchronize();
 
       // printf("done with managed kernel...\n");
       // getchar();
@@ -161,14 +173,13 @@ int main( int argc, char *argv[] )
    // getchar();
 
 
-    cpu_compute(in,out,blocks*threads);
+    cpu_compute(out,blocks*threads);
+    //cpu_compute(out_d,blocks*threads);
 
-    cudaFreeHost(in);
     cudaFreeHost(out);
     
-    cudaFree(in_d);
-    cudaFree(out_d);
+   // cudaFree(out_d);
 
-    cudaDeviceReset();
+    //cudaDeviceReset();
     return 0;
 }

@@ -129,23 +129,23 @@ int main( int argc, char *argv[] )
 
     //gpu_hook(1);
 
-    //printf("done with init...\n");
-    //getchar();
+    printf("done with init...\n");
+    getchar();
 
 
     
-    cudaHostAlloc(&out,blocks*threads*sizeof(theblob),0);
+//    cudaHostAlloc(&out,blocks*threads*sizeof(theblob),0);
 
+    cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));
    // out[0].data = 14;
 
    // printf("%lu\n",(unsigned long)out[0].data);
 
 
-    //printf("done with init and memory allocations...\n");
-    //getchar();
+    printf("done with init and memory allocations...\n");
+    getchar();
 
 
-//    cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));
 
    
     //printf("done with init and memory allocations...\n");
@@ -153,15 +153,15 @@ int main( int argc, char *argv[] )
 
     for(int i = 0; i<iterations; i++) {
        
-       kernel<<<blocks,threads>>>(out,blocks*threads);
-       cudaDeviceSynchronize();
+  //     kernel<<<blocks,threads>>>(out,blocks*threads);
+   //    cudaDeviceSynchronize();
 
       // printf("done with hostalloc kernel...\n");
       // getchar();
 
 
-    //   kernel_d<<<blocks,threads>>>(out_d,blocks*threads);
-    //   cudaDeviceSynchronize();
+       kernel_d<<<blocks,threads>>>(out_d,blocks*threads);
+       cudaDeviceSynchronize();
 
       // printf("done with managed kernel...\n");
       // getchar();
@@ -173,12 +173,11 @@ int main( int argc, char *argv[] )
    // getchar();
 
 
-    cpu_compute(out,blocks*threads);
-    //cpu_compute(out_d,blocks*threads);
+    //cpu_compute(out,blocks*threads);
+    cpu_compute(out_d,blocks*threads);
 
-    cudaFreeHost(out);
-    
-   // cudaFree(out_d);
+    //cudaFreeHost(out);
+    cudaFree(out_d);
 
     //cudaDeviceReset();
     return 0;

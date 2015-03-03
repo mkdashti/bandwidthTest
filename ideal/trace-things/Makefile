@@ -2,7 +2,7 @@ CUDA_DIR := /usr/local/cuda-6.5
 CUDA_LIB_DIR := $(CUDA_DIR)/lib
 
 CC := $(CUDA_DIR)/bin/nvcc -O0 -arch=sm_30 -Xptxas -dlcm=ca
-#CC := $(CUDA_DIR)/bin/nvcc -arch=sm_30 -Xptxas -dlcm=cg
+#CC := $(CUDA_DIR)/bin/nvcc -arch=sm_30
 
 INCLUDE := $(CUDA_DIR)/include
 

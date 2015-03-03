@@ -35,7 +35,7 @@ inline double diff_s(struct timeval start, struct timeval end)
 
 typedef struct blob {
    uint64_t data;
-   //char pad[120];
+   char pad[24];
 }theblob;
 
 __global__ void kernel(theblob *out, int threads)
@@ -127,23 +127,19 @@ int main( int argc, char *argv[] )
 
     HANDLE_ERROR(cudaFree(0));
 
-    //gpu_hook(1);
 
-    printf("done with init...\n");
-    getchar();
-
+    //printf("done with init...\n");
+    //getchar();
 
     
-//    cudaHostAlloc(&out,blocks*threads*sizeof(theblob),0);
-
+    cudaHostAlloc(&out,blocks*threads*sizeof(theblob),0);
     cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));
-   // out[0].data = 14;
 
    // printf("%lu\n",(unsigned long)out[0].data);
 
 
-    printf("done with init and memory allocations...\n");
-    getchar();
+    //printf("done with init and memory allocations...\n");
+    //getchar();
 
 
 
@@ -153,8 +149,8 @@ int main( int argc, char *argv[] )
 
     for(int i = 0; i<iterations; i++) {
        
-  //     kernel<<<blocks,threads>>>(out,blocks*threads);
-   //    cudaDeviceSynchronize();
+       kernel<<<blocks,threads>>>(out,blocks*threads);
+       cudaDeviceSynchronize();
 
       // printf("done with hostalloc kernel...\n");
       // getchar();
@@ -173,12 +169,12 @@ int main( int argc, char *argv[] )
    // getchar();
 
 
-    //cpu_compute(out,blocks*threads);
+    cpu_compute(out,blocks*threads);
     cpu_compute(out_d,blocks*threads);
 
-    //cudaFreeHost(out);
+    cudaFreeHost(out);
     cudaFree(out_d);
 
-    //cudaDeviceReset();
+    cudaDeviceReset();
     return 0;
 }

@@ -124,22 +124,42 @@ int main( int argc, char *argv[] )
        }
     }
 
+   // int *ptr_array_host_0[100];
+   // int *ptr_array_host[100];
+   // int *ptr_array_managed[100];
 
     HANDLE_ERROR(cudaFree(0));
+  /*  for(int a=0; a< 10; a++)
+    {
+       cudaHostAlloc(&ptr_array_host_0[a],sizeof(int),0);
+       printf("host_0 = %p\n",ptr_array_host_0[a]);
+    }
+
+*/
+  
+    //gpu_hook(1);
+    //gpu_hook(3);
 
 
-    //printf("done with init...\n");
-    //getchar();
+    printf("done with init...\n");
+    getchar();
 
-    
+  /*  for(int a=0; a< 10; a++)
+    {
+       cudaHostAlloc(&ptr_array_host[a],sizeof(int),0);
+       cudaMallocManaged(&ptr_array_managed[a],sizeof(int));
+       printf("host = %p\n",ptr_array_host[a]);
+       printf("managed = %p\n",ptr_array_managed[a]);
+    }
+*/
     cudaHostAlloc(&out,blocks*threads*sizeof(theblob),0);
-    cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));
+    //cudaMallocManaged(&out_d,blocks*threads*sizeof(theblob));
 
-   // printf("%lu\n",(unsigned long)out[0].data);
+    // printf("%lu\n",(unsigned long)out[0].data);
 
 
-    //printf("done with init and memory allocations...\n");
-    //getchar();
+    printf("done with init and memory allocations...\n");
+    getchar();
 
 
 
@@ -150,14 +170,18 @@ int main( int argc, char *argv[] )
     for(int i = 0; i<iterations; i++) {
        
        kernel<<<blocks,threads>>>(out,blocks*threads);
+    //   *ptr_array_host[0]=5;
        cudaDeviceSynchronize();
+    //   gpu_hook(5);
 
       // printf("done with hostalloc kernel...\n");
       // getchar();
 
 
-       kernel_d<<<blocks,threads>>>(out_d,blocks*threads);
-       cudaDeviceSynchronize();
+      // kernel_d<<<blocks,threads>>>(out_d,blocks*threads);
+       //*ptr_array_managed[0]=5;
+       //cudaDeviceSynchronize();
+      // gpu_hook(5);
 
       // printf("done with managed kernel...\n");
       // getchar();
@@ -170,11 +194,18 @@ int main( int argc, char *argv[] )
 
 
     cpu_compute(out,blocks*threads);
-    cpu_compute(out_d,blocks*threads);
+    //cpu_compute(out_d,blocks*threads);
 
     cudaFreeHost(out);
-    cudaFree(out_d);
-
+    //cudaFree(out_d);
+    
+    /*for(int a=0; a< 10; a++)
+    {
+       cudaFreeHost(ptr_array_host_0[a]);
+       cudaFreeHost(ptr_array_host[a]);
+       cudaFree(ptr_array_managed[a]);
+    }
+   */
     cudaDeviceReset();
     return 0;
 }
